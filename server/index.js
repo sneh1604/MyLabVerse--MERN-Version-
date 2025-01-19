@@ -16,7 +16,7 @@ dotenv.config();
 const app = express();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const genAI = new GoogleGenerativeAI("AIzaSyCmJIeonwGIeqQc2T2vL3EhetARTT4cuEA");
+const genAI = new GoogleGenerativeAI("AIzaSyAr7rZzlbvBfhKa9fFekY4-LIFW4J2fILQ");
 
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 const ProfileModel = require('./models/Profile');

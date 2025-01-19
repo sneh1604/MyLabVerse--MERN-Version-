@@ -18,6 +18,7 @@ import {
 } from "react-icons/fa";
 
 export default function Dashboard() {
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [success, setSuccess] = useState("");
   const [userName, setUserName] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -31,7 +32,8 @@ export default function Dashboard() {
       .then((res) => {
         if (res.data === "Success") {
           setSuccess("Successfully Verified Admin");
-          setUserName(res.data.userName); // Assuming the response includes userName
+          setUserName(res.data.userName);
+          setIsLoggedIn(true); // Assuming the response includes userName
         } else {
           navigate("/login");
         }
@@ -40,12 +42,10 @@ export default function Dashboard() {
   }, [navigate]);
 
   const handleLogout = () => {
-    axios
-      .post("http://localhost:4000/logout")
-      .then((res) => {
-        navigate("/login");
-      })
-      .catch((err) => console.log(err));
+    localStorage.removeItem('user');
+    setIsLoggedIn(false);
+    setUserName('');
+    navigate('/login');
   };
 
   return (

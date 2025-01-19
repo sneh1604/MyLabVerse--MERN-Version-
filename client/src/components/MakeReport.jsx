@@ -10,21 +10,21 @@ export default function MakeReport() {
   const navigate = useNavigate();
 
   const tests = [
-    { name: "CT Scan", icon: <FaProcedures className="text-blue-600 text-4xl" />, route: "/ct-scan" },
-    { name: "Electrocardiogram (ECG)", icon: <FaHeartbeat className="text-red-600 text-4xl" />, route: "/ecg" },
-    { name: "Magnetic Resonance Imaging (MRI) Scan", icon: <FaFileAlt className="text-green-600 text-4xl" />, route: "/mri-scan" },
-    { name: "X-Rays", icon: <FaXRay className="text-gray-600 text-4xl" />, route: "/x-rays" },
-    { name: "Ultrasound", icon: <FaTint className="text-pink-600 text-4xl" />, route: "/ultrasound" }, // Changed the icon here
-    { name: "Full Body Checkup", icon: <FaClipboard className="text-purple-600 text-4xl" />, route: "/full-body-checkup" },
+    // { name: "CT Scan", icon: <FaProcedures className="text-blue-600 text-4xl" />, route: "/ct-scan" },
+    // { name: "Electrocardiogram (ECG)", icon: <FaHeartbeat className="text-red-600 text-4xl" />, route: "/ecg" },
+    // { name: "Magnetic Resonance Imaging (MRI) Scan", icon: <FaFileAlt className="text-green-600 text-4xl" />, route: "/mri-scan" },
+    // { name: "X-Rays", icon: <FaXRay className="text-gray-600 text-4xl" />, route: "/x-rays" },
+    // { name: "Ultrasound", icon: <FaTint className="text-pink-600 text-4xl" />, route: "/ultrasound" }, // Changed the icon here
+    // { name: "Full Body Checkup", icon: <FaClipboard className="text-purple-600 text-4xl" />, route: "/full-body-checkup" },
     { name: "Haemogram Report", icon: <FaFlask className="text-yellow-600 text-4xl" />, route: "/hemogram-report" },
     { name: "Lipid Profile", icon: <FaVial className="text-orange-600 text-4xl" />, route: "/lipid-profile" },
     { name: "Blood Sugar Test", icon: <BsDropletHalf className="text-blue-600 text-4xl" />, route: "/blood-sugar-report" },
-    { name: "Thyroid Function Test", icon: <FaDna className="text-teal-600 text-4xl" />, route: "/thyroid-function-test" },
-    { name: "Vitamin D Test", icon: <FaSun className="text-yellow-500 text-4xl" />, route: "/vitamin-d-test" },
-    { name: "Kidney Function Test", icon: <GiKidneys className="text-blue-800 text-4xl" />, route: "/kidney-function-test" },
-    { name: "Liver Function Test", icon: <GiLiver className="text-red-700 text-4xl" />, route: "/liver-function-test" },
-    { name: "Urine Analysis", icon: <FaMicroscope className="text-green-600 text-4xl" />, route: "/urine-analysis" },
-    { name: "Pap Smear", icon: <FaTooth className="text-pink-400 text-4xl" />, route: "/pap-smear" },
+    // { name: "Thyroid Function Test", icon: <FaDna className="text-teal-600 text-4xl" />, route: "/thyroid-function-test" },
+    // { name: "Vitamin D Test", icon: <FaSun className="text-yellow-500 text-4xl" />, route: "/vitamin-d-test" },
+    // { name: "Kidney Function Test", icon: <GiKidneys className="text-blue-800 text-4xl" />, route: "/kidney-function-test" },
+    // { name: "Liver Function Test", icon: <GiLiver className="text-red-700 text-4xl" />, route: "/liver-function-test" },
+    // { name: "Urine Analysis", icon: <FaMicroscope className="text-green-600 text-4xl" />, route: "/urine-analysis" },
+    // { name: "Pap Smear", icon: <FaTooth className="text-pink-400 text-4xl" />, route: "/pap-smear" },
   ];
 
   return (

@@ -119,6 +119,13 @@ function HemogramReport() {
             })
             .catch(error => console.error('Error submitting report:', error));
     };
+    const f = document.getElementsByTagName('input');
+    for (let i = 0; i < f.length; i++) {
+      f[i].addEventListener("wheel", (event) => {
+        // console.log("AAA");
+        event.preventDefault(); // Disable scroll increment/decrement
+      });
+    }
 
     return (
         <div className="flex min-h-screen bg-gray-100">
@@ -426,41 +433,37 @@ function HemogramReport() {
                                 </select>
                             </div>
                         </div>
-                        <div className="flex justify-end mt-6">
                             <button
                                 type="submit"
                                 className="bg-blue-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-blue-700"
                             >
                                 Submit
                             </button>
-                        </div>
                     </form>
+                    {modalOpen && (
+                        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                            <div className="bg-white p-6 rounded-md shadow-lg">
+                                <h3 className="text-lg font-semibold">Confirm Submission</h3>
+                                <p className="mt-2">Are you sure you want to submit this report?</p>
+                                <div className="mt-4 flex justify-end space-x-2">
+                                    <button
+                                        className="bg-gray-200 py-2 px-4 rounded-md hover:bg-gray-300"
+                                        onClick={() => setModalOpen(false)}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+                                        onClick={confirmSubmit}
+                                    >
+                                        Confirm
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </main>
             </div>
-
-            {/* Modal */}
-            {modalOpen && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="bg-white p-6 rounded-md shadow-md">
-                        <h3 className="text-lg font-semibold mb-4">Confirm Submission</h3>
-                        <p>Are you sure you want to submit the Hemogram Report?</p>
-                        <div className="flex justify-end mt-4">
-                            <button
-                                onClick={() => setModalOpen(false)}
-                                className="mr-4 bg-gray-300 text-gray-700 py-2 px-4 rounded-md shadow-sm hover:bg-gray-400"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={confirmSubmit}
-                                className="bg-blue-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-blue-700"
-                            >
-                                Confirm
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

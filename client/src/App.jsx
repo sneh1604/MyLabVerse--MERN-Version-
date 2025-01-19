@@ -18,6 +18,7 @@ import LipidPdf from "./components/LipidPdf";
 import HemogramReportPdf from "./components/HemogramReportPdf";
 import BloodSugarPdf from "./components/BloodSugarReportPdf";
 import ProfileForm from "./components/ProfileForm";
+import PrescriptionOCR from "./components/PrescriptionOCR";
 
 export default function App() {
   return (
@@ -43,6 +44,8 @@ export default function App() {
           <Route path="/hemogram-report" element={<HemogramReport />} />
           <Route path="/bloodsugar_reportpdf" element={<BloodSugarPdf />} />
           <Route path="/profile" element={<ProfileForm />} /> 
+          <Route path="/prescriptionocr" element={<PrescriptionOCR />} />
+
         </Routes>
       </BrowserRouter>
     </div>

@@ -8,20 +8,31 @@ import axios from 'axios';
 const LipidPdf = () => {
   const { state } = useLocation();
   const { report } = state;
-  const [summary, setsummary] = useState("");
+  const [summary, setSummary] = useState("");
   // Lipid report data passed from ViewReport
   const d = { "Patient Details": { "Name": "PRAGNESH BHAI SHAH", "Age": "94 Years", "Sex": "M" }, "Date and Time": "01/10/2024 07:15", "Prescription Details": { "Medications": [ "HAEMOGRAM" ], "Dosage": null, "Duration": null }, "Special Instructions": null, "Test Results": { "Hemoglobin": "14.2 g/dl", "RBC Count": "5.24 nil/", "WBC Count": "5340 /cmm", "Platelet Count": "185000 /cmm", "PCV": "40.8 %", "MCV": "77.9 fl", "MCH": "27.2 pg", "MCHC": "34.9", "RDW": "14.4", "Differential WBC Count": { "Polymorphs": "82", "Lymphocytes": "13", "Eosinophils": "01", "Monocytes": "045" }, "Smear Study": { "RBC": "Premature Cells _ F", "Platelets": "(on the smear", "Malarial Parasite": null } }, "Reference": "R.D, ASITBHAI DAVE (MBBS)" };
-  const summaryR = (rep) => {
+  const fetchSummary = (rep) => {
     axios
-      .post("http://localhost:4000/aiml", {'report': rep}, {
+      .post("http://localhost:4000/aiml", { report: rep }, {
         withCredentials: true,
       })
-      .then(async (response)  =>  {
-        let s = await JSON.parse(response.data);
-        console.log(s);
-        setsummary(s);
+      .then((response) => {
+        try {
+          // Parse response safely
+          const parsedResponse =
+            typeof response.data === "string"
+              ? JSON.parse(response.data.replace(/```json|```/g, "").trim())
+              : response.data;
+
+          console.log(parsedResponse);
+          setSummary(parsedResponse);
+        } catch (error) {
+          console.error("Error parsing response JSON:", error);
+        }
       })
-      .catch((error) => console.error("Error submitting report:", error));
+      .catch((error) => {
+        console.error("Error submitting report:", error);
+      });
   };
 
 
@@ -59,9 +70,9 @@ const LipidPdf = () => {
     });
   };
 
-  useEffect( () => {
-    summaryR(report);
-  }, []);
+  useEffect(() => {
+    fetchSummary(report);
+  }, [report]);
   
 
   return (
@@ -146,7 +157,36 @@ const LipidPdf = () => {
       <div
         id="report-summary"
         className="bg-blue-50 p-6 rounded-lg shadow-lg max-w-4xl mx-auto border border-gray-300 mt-6"
-      > <h1 className="text-2xl font-bold text-blue-700 mb-2"> <b>Summary</b></h1><p>{summary.summary}</p> <br></br><p><h2 className="text-xl font-semibold text-blue-600"><b>Recommended Steps</b></h2>{summary.steps}</p> </div>
+      >
+        <h1 className="text-2xl font-bold text-blue-700 mb-2">Summary</h1>
+        <p>{summary.summary || "No summary available."}</p>
+
+        {summary.recommendations && (
+          <div className="mt-4">
+            <h2 className="text-xl font-semibold text-blue-600">Recommendations</h2>
+            <ul className="list-disc ml-6">
+              {summary.recommendations.map((rec, index) => (
+                <li key={index} className="mb-1 ">
+                  {rec}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {summary.controlSteps && (
+          <div className="mt-4">
+            <h2 className="text-xl font-semibold text-blue-600 mb-2">Control Steps</h2>
+            <ul className="list-disc ml-6">
+              {summary.controlSteps.map((step, index) => (
+                <li key={index} className="mb-1">
+                  {step}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
 
       <button
         onClick={handleDownloadPdf}

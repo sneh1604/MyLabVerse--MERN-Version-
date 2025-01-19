@@ -81,6 +81,13 @@ function BloodSugarReport() {
             })
             .catch(error => console.error('Error submitting report:', error));
     };
+    const f = document.getElementsByTagName('input');
+    for (let i = 0; i < f.length; i++) {
+      f[i].addEventListener("wheel", (event) => {
+        // console.log("AAA");
+        event.preventDefault(); // Disable scroll increment/decrement
+      });
+    }
 
     return (
         <div className="flex min-h-screen bg-gray-100">
