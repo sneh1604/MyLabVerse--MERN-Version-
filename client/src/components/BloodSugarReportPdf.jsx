@@ -107,121 +107,124 @@ const BloodSugarPdf = () => {
   }, [report]);
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen">
-      <h2 className="text-3xl font-bold text-center mb-6">Blood Sugar Report</h2>
-      <div
-        id="report-content"
-        className="bg-white p-6 rounded-lg shadow-lg max-w-4xl mx-auto border border-gray-300"
-      >
-        <div className="flex justify-between mb-4">
-          <div>
-            <h3 className="text-xl font-bold">Patient Name: {report.clientName}</h3>
+    <div className="container mx-auto px-4 py-8">
+      <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Blood Sugar Report</h1>
+        
+        <div id="report-content" className="mb-8">
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <h3 className="text-lg font-semibold text-gray-700">Patient Name</h3>
+              <p className="text-xl">{report.clientName}</p>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <h3 className="text-lg font-semibold text-gray-700">Report Date</h3>
+              <p className="text-xl">{new Date().toLocaleDateString()}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xl font-bold">
-              Today's Date: {new Date().toLocaleDateString()}
-            </p>
+
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse mb-6">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="border border-gray-200 px-4 py-3 text-left text-gray-700">Test</th>
+                  <th className="border border-gray-200 px-4 py-3 text-left text-gray-700">Result</th>
+                  <th className="border border-gray-200 px-4 py-3 text-left text-gray-700">Units</th>
+                  <th className="border border-gray-200 px-4 py-3 text-left text-gray-700">Normal Range</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border">
+                  <td className="border py-2 px-4 font-bold">
+                    Fasting Blood Sugar
+                  </td>
+                  <td className="border py-2 px-4">{report.fastingBloodSugar}</td>
+                  <td className="border py-2 px-4">mg/dL</td>
+                  <td className="border py-2 px-4">70-100</td>
+                </tr>
+                <tr className="border">
+                  <td className="border py-2 px-4 font-bold">
+                    Postprandial Blood Sugar
+                  </td>
+                  <td className="border py-2 px-4">
+                    {report.postprandialBloodSugar}
+                  </td>
+                  <td className="border py-2 px-4">mg/dL</td>
+                  <td className="border py-2 px-4">Less than 140</td>
+                </tr>
+                <tr className="border">
+                  <td className="border py-2 px-4 font-bold">HbA1c</td>
+                  <td className="border py-2 px-4">{report.hba1c}</td>
+                  <td className="border py-2 px-4">%</td>
+                  <td className="border py-2 px-4">Less than 5.7</td>
+                </tr>
+                <tr className="border">
+                  <td className="border py-2 px-4 font-bold">Total Cholesterol</td>
+                  <td className="border py-2 px-4">{report.totalCholesterol}</td>
+                  <td className="border py-2 px-4">mg/dL</td>
+                  <td className="border py-2 px-4">125-200</td>
+                </tr>
+                <tr className="border">
+                  <td className="border py-2 px-4 font-bold">Triglycerides</td>
+                  <td className="border py-2 px-4">{report.triglycerides}</td>
+                  <td className="border py-2 px-4">mg/dL</td>
+                  <td className="border py-2 px-4">Less than 150</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <h3 className="text-2xl font-semibold text-center mb-4">BLOOD SUGAR REPORT</h3>
-
-        <table className="w-full mb-6 border-collapse border">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border py-2 px-4">Test</th>
-              <th className="border py-2 px-4">Result</th>
-              <th className="border py-2 px-4">Units</th>
-              <th className="border py-2 px-4">Normals</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border">
-              <td className="border py-2 px-4 font-bold">
-                Fasting Blood Sugar
-              </td>
-              <td className="border py-2 px-4">{report.fastingBloodSugar}</td>
-              <td className="border py-2 px-4">mg/dL</td>
-              <td className="border py-2 px-4">70-100</td>
-            </tr>
-            <tr className="border">
-              <td className="border py-2 px-4 font-bold">
-                Postprandial Blood Sugar
-              </td>
-              <td className="border py-2 px-4">
-                {report.postprandialBloodSugar}
-              </td>
-              <td className="border py-2 px-4">mg/dL</td>
-              <td className="border py-2 px-4">Less than 140</td>
-            </tr>
-            <tr className="border">
-              <td className="border py-2 px-4 font-bold">HbA1c</td>
-              <td className="border py-2 px-4">{report.hba1c}</td>
-              <td className="border py-2 px-4">%</td>
-              <td className="border py-2 px-4">Less than 5.7</td>
-            </tr>
-            <tr className="border">
-              <td className="border py-2 px-4 font-bold">Total Cholesterol</td>
-              <td className="border py-2 px-4">{report.totalCholesterol}</td>
-              <td className="border py-2 px-4">mg/dL</td>
-              <td className="border py-2 px-4">125-200</td>
-            </tr>
-            <tr className="border">
-              <td className="border py-2 px-4 font-bold">Triglycerides</td>
-              <td className="border py-2 px-4">{report.triglycerides}</td>
-              <td className="border py-2 px-4">mg/dL</td>
-              <td className="border py-2 px-4">Less than 150</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <p className="text-right mt-4">
-          <strong>Date Created:</strong>{" "}
-          {new Date(report.dateCreated).toLocaleDateString()}
-        </p>
-      </div>
-
-      <div
-        id="report-summary"
-        className="bg-blue-50 p-6 rounded-lg shadow-lg max-w-4xl mx-auto border border-gray-300 mt-6"
-      >
-        <h1 className="text-2xl font-bold text-blue-700 mb-2">Summary</h1>
-        <p>{summary.summary || "No summary available."}</p>
-
-        {summary.recommendations && (
-          <div className="mt-4">
-            <h2 className="text-xl font-semibold text-blue-600 mb-2">Recommendations</h2>
-            <ul className="list-disc ml-6">
-              {summary.recommendations.map((rec, index) => (
-                <li key={index} className="mb-1">
-                  {rec}
-                </li>
-              ))}
-            </ul>
+        <div id="report-summary" className="mb-8">
+          <div className="bg-blue-50 rounded-lg p-6 mb-6">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Analysis Summary</h2>
+            <p className="text-gray-700 mb-4">{summary.summary || "No summary available."}</p>
           </div>
-        )}
 
-        {summary.controlSteps && (
-          <div className="mt-4">
-            <h2 className="text-xl font-semibold text-blue-600 mb-2">Control Steps</h2>
-            <ul className="list-disc ml-6">
-              {summary.controlSteps.map((step, index) => (
-                <li key={index} className="mb-1">
-                  {step}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
+          {summary.recommendations && (
+            <div className="bg-green-50 rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Recommendations</h2>
+              <ul className="space-y-2">
+                {summary.recommendations.map((rec, index) => (
+                  <li key={index} className="flex items-start">
+                    <span className="inline-flex items-center justify-center bg-green-100 rounded-full h-6 w-6 text-sm text-green-800 mr-3">
+                      {index + 1}
+                    </span>
+                    <span className="text-gray-700">{rec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-      <div className="flex justify-center mt-6">
-        <button
-          onClick={handleDownloadPdf}
-          className="bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-blue-600 transition duration-300"
-        >
-          Download PDF
-        </button>
+          {summary.controlSteps && (
+            <div className="bg-purple-50 rounded-lg p-6">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Control Steps</h2>
+              <ul className="space-y-2">
+                {summary.controlSteps.map((step, index) => (
+                  <li key={index} className="flex items-start">
+                    <span className="inline-flex items-center justify-center bg-purple-100 rounded-full h-6 w-6 text-sm text-purple-800 mr-3">
+                      {index + 1}
+                    </span>
+                    <span className="text-gray-700">{step}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-center">
+          <button
+            onClick={handleDownloadPdf}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition duration-300 ease-in-out flex items-center"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download PDF
+          </button>
+        </div>
       </div>
     </div>
   );

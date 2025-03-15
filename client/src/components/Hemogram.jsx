@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaBars, FaUserCircle, FaFileAlt, FaFlask, FaTachometerAlt, FaUsers } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 function HemogramReport() {
     const [clients, setClients] = useState([]);
@@ -30,6 +31,7 @@ function HemogramReport() {
         wbcs: '',
         platelet_option: ''
     });
+    const [showSuccess, setShowSuccess] = useState(false);
 
     // Fetch the list of registered users (excluding admins)
     useEffect(() => {
@@ -76,27 +78,15 @@ function HemogramReport() {
     // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Submitting form data:', formData);  // Log form data before submitting
-
-        try {
-            const response = await axios.post('http://localhost:4000/hemogram-report', formData, { withCredentials: true });
-            console.log('Report submitted successfully:', response.data);
-        } catch (error) {
-            if (error.response) {
-                console.error('Error response:', error.response.data);
-            } else {
-                console.error('Error submitting report:', error);
-            }
-        }
+        setModalOpen(true); // Show confirmation modal
     };
-
 
     const confirmSubmit = () => {
         axios.post('http://localhost:4000/hemogram-report', formData, { withCredentials: true })
-            .then(response => {
+            .then(() => {
                 setFormData({
                     clientName: '',
-                    clientId: '',  // Clear clientId as well
+                    clientId: '',
                     hemoglobin: '',
                     rbc_count: '',
                     wbc_count: '',
@@ -115,9 +105,16 @@ function HemogramReport() {
                     wbcs: '',
                     platelet_option: ''
                 });
-                setModalOpen(false);  // Close modal after submission
+                setModalOpen(false);
+                setShowSuccess(true); // Show success message
+                setTimeout(() => {
+                    setShowSuccess(false);
+                }, 3000); // Hide success message after 3 seconds
             })
-            .catch(error => console.error('Error submitting report:', error));
+            .catch(error => {
+                console.error('Error submitting report:', error);
+                setModalOpen(false);
+            });
     };
     const f = document.getElementsByTagName('input');
     for (let i = 0; i < f.length; i++) {
@@ -197,6 +194,11 @@ function HemogramReport() {
                     </div>
                 </header>
                 <main className="flex-grow p-6 bg-gray-100">
+                    {showSuccess && (
+                        <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg">
+                            Report submitted successfully!
+                        </div>
+                    )}
                     <h2 className="text-3xl font-semibold text-center mb-6">Submit Haemogram Report Details</h2>
                     <form onSubmit={handleSubmit} className="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-lg">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -441,7 +443,7 @@ function HemogramReport() {
                             </button>
                     </form>
                     {modalOpen && (
-                        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                             <div className="bg-white p-6 rounded-md shadow-lg">
                                 <h3 className="text-lg font-semibold">Confirm Submission</h3>
                                 <p className="mt-2">Are you sure you want to submit this report?</p>
