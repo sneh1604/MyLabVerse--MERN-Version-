@@ -108,7 +108,10 @@ const ViewReport = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-black" style={{ fontFamily: "Satoshi" }}>
+    <div
+      className="flex flex-col min-h-screen bg-black"
+      style={{ fontFamily: "Satoshi" }}
+    >
       {/* Header Section */}
       <header className="bg-[#6C5BD4] text-white p-4 shadow-lg">
         <div className="container mx-auto flex justify-between items-center">
@@ -121,21 +124,27 @@ const ViewReport = () => {
           <nav className="flex items-center space-x-6">
             <Link
               to="/userdashboard"
-              className="hover:text-yellow-400 flex items-center space-x-2"
+              className="flex items-center space-x-2 hover:text-yellow-400"
             >
-              <FaHome className="mr-2" /> Dashboard
+              <FaHome /> Dashboard
             </Link>
             <Link
               to="/viewreport"
-              className="hover:text-yellow-400 flex items-center space-x-2"
+              className="flex items-center space-x-2 hover:text-yellow-400"
             >
-              <FaFileAlt className="mr-2" /> Reports
+              <FaFileAlt /> Reports
             </Link>
             <Link
               to="/graph"
-              className="hover:text-yellow-400 flex items-center space-x-2"
+              className="flex items-center space-x-2 hover:text-yellow-400"
             >
-              <FaChartBar className="mr-2" /> Graph Analysis
+              <FaChartBar /> Graph Analysis
+            </Link>
+            <Link
+              to="/prescriptionocr"
+              className="flex items-center space-x-2 hover:text-yellow-400"
+            >
+              <FaFileAlt /> OCR
             </Link>
           </nav>
           <div className="relative">

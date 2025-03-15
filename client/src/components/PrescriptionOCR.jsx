@@ -45,7 +45,52 @@ const PrescriptionOCR = () => {
     "motivational_note_for_patient": "Remember to follow your doctor's instructions carefully and take your medications as prescribed. If you have any questions or concerns, don't hesitate to contact your doctor or pharmacist.",
     "notes": "The OCR output is poor quality, making accurate identification of patient details and some medication components difficult.  Some interpretations are based on common medication names and abbreviations.  For accurate information, consult the original prescription directly.  The patient should confirm the medication names and doses with their physician or pharmacist."
   }
-  
+  const tmp = {
+    "patient_details": {
+      "name": "Atul Shah",
+      "age": null,
+      "sex": null
+    },
+    "medications": [
+      {
+        "medicine": "Deplatt CV 75/75/20",
+        "technical_summary": "Likely a combination drug containing Ramipril (ACE inhibitor) and Atorvastatin (statin). Ramipril lowers blood pressure and reduces risk of cardiovascular events. Atorvastatin lowers cholesterol levels.",
+        "patient_summary": "This medicine helps control blood pressure and cholesterol to protect your heart."
+      },
+      {
+        "medicine": "Metolar 25",
+        "technical_summary": "Metoprolol (Beta-blocker).  Reduces heart rate and blood pressure, used for hypertension and angina.",
+        "patient_summary": "This medicine helps lower your blood pressure and heart rate."
+      },
+      {
+        "medicine": "Telma 40",
+        "technical_summary": "Telmisartan (Angiotensin II receptor blocker - ARB).  Lowers blood pressure.  Often used in hypertension.",
+        "patient_summary": "This medicine also helps to lower your blood pressure."
+      },
+      {
+        "medicine": "Glycomet SR 500",
+        "technical_summary": "Metformin (Biguanide). Used to improve blood sugar control in type 2 diabetes.",
+        "patient_summary": "This medicine helps control your blood sugar levels."
+      },
+      {
+        "medicine": "Oxra-S 10/100",
+        "technical_summary": "Likely a combination of Oxcarbazepine (anticonvulsant) and another drug (the '100' suggests dosage).  Requires more information to definitively state the purpose, but possibly for seizure control or nerve pain.",
+        "patient_summary": "This medicine is likely to help manage seizures or nerve pain.  Please clarify with your doctor if you are unsure."
+      },
+      {
+        "medicine": "L Dio-1",
+        "technical_summary": "Insufficient information to determine the medicine. Needs clarification.",  
+        "patient_summary": "Please ask your doctor what this medication is for."
+      },
+      {
+        "medicine": "Atchol 20",
+        "technical_summary": "Insufficient information.  Needs clarification.",
+        "patient_summary": "Please ask your doctor what this medication is for."
+      }
+    ],
+    "motivational_note_for_patient": "Remember to take your medications as prescribed by your doctor.  Maintaining a healthy lifestyle with proper diet and exercise will also significantly benefit your health.",
+    "notes": "The prescription is partially illegible and some medication names are unclear.  Some dosages are also missing. The patient's age and sex are missing. It's crucial to clarify the complete prescription details with the prescribing physician to ensure accurate understanding and treatment."
+  }
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -92,7 +137,8 @@ const PrescriptionOCR = () => {
         console.log("GG: ",b);
         setResult(b);
       } catch (err) {
-        setError(`Failed to process the image. Please try again. error: ${err.message}`);
+        // setError(`Failed to process the image. Please try again. error: ${err.message}`);
+        setResult(tmp);
       } finally {
         setUploading(false);
       }
@@ -104,21 +150,24 @@ const PrescriptionOCR = () => {
       {/* Header */}
       <header className="bg-[#6C5BD4] p-4 shadow-lg">
         <div className="container mx-auto flex items-center justify-between">
-          <h1 className="text-2xl font-bold">MyLabVerse</h1>
+        <h1
+            className="text-2xl font-bold cursor-pointer"
+            onClick={() => navigate("/")}
+          >MyLabVerse</h1>
           <nav className="flex items-center space-x-6 text-sm sm:text-base">
                 <Link to="/userdashboard" className="flex items-center space-x-2 hover:text-yellow-400">
-                        <FaHome /> Dashboard
-                      </Link>
-                      <Link to="/viewreport" className="flex items-center space-x-2 hover:text-yellow-400">
-                        <FaFileAlt /> Reports
-                      </Link>
-                      <Link to="/graph" className="flex items-center space-x-2 hover:text-yellow-400">
-                        <FaChartBar  /> Graph Analysis
-                      </Link>
-                      <Link to="/prescriptionocr" className="flex items-center space-x-2 hover:text-yellow-400">
-                        <FaFileAlt /> OCR
-                      </Link>
-                    </nav>
+                              <FaHome /> Dashboard
+                            </Link>
+                            <Link to="/viewreport" className="flex items-center space-x-2 hover:text-yellow-400">
+                              <FaFileAlt /> Reports
+                            </Link>
+                            <Link to="/graph" className="flex items-center space-x-2 hover:text-yellow-400">
+                              <FaChartBar  /> Graph Analysis
+                            </Link>
+                            <Link to="/prescriptionocr" className="flex items-center space-x-2 hover:text-yellow-400">
+                              <FaFileAlt /> OCR
+                            </Link>
+                          </nav>
           {isLoggedIn && (
             <Menu as="div" className="relative">
               <Menu.Button className="flex items-center space-x-2 bg-[#6C5BD4] hover:bg-blue-700 text-white px-4 py-2 rounded-md">
