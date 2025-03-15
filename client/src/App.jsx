@@ -19,6 +19,11 @@ import HemogramReportPdf from "./components/HemogramReportPdf";
 import BloodSugarPdf from "./components/BloodSugarReportPdf";
 import ProfileForm from "./components/ProfileForm";
 import PrescriptionOCR from "./components/PrescriptionOCR";
+import AdministratorLogin from "./components/AdministratorLogin";
+import AdministratorDashboard from "./components/AdministratorDashboard";
+import AdministratorRegister from "./components/AdministratorRegister";
+import InitialAdminSetup from "./components/InitialAdminSetup";
+import SingleHemogramReport from "./components/SingleHemogramReport"; // You'll need to create this component
 
 export default function App() {
   return (
@@ -40,12 +45,18 @@ export default function App() {
           <Route path="/blood-sugar-report" element={<BloodSugarReport/>} />  
           <Route path="/userdashboard" element={<UserDashboard />} />
           <Route path="/hemogram-reportpdf" element={<HemogramReportPdf />} />
+          <Route path="/hemogram-report/:id" element={<SingleHemogramReport />} /> {/* Add this route for single hemogram report */}
           <Route path="/lipid-report" element={<LipidPdf />} />
-          <Route path="/hemogram-report" element={<HemogramReport />} />
           <Route path="/bloodsugar_reportpdf" element={<BloodSugarPdf />} />
           <Route path="/profile" element={<ProfileForm />} /> 
           <Route path="/prescriptionocr" element={<PrescriptionOCR />} />
-
+          <Route path="/hemogram-report" element={<HemogramReport />} />
+          
+          {/* Administrator routes */}
+          <Route path="/administrator-login" element={<AdministratorLogin />} />
+          <Route path="/administrator-dashboard" element={<AdministratorDashboard />} />
+          <Route path="/administrator-register" element={<AdministratorRegister />} />
+          <Route path="/initial-admin-setup" element={<InitialAdminSetup />} />
         </Routes>
       </BrowserRouter>
     </div>

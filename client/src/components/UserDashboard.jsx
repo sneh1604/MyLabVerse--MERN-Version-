@@ -45,6 +45,9 @@ const UserDashboard = () => {
             <Link to="/prescriptionocr" className="flex items-center space-x-2 hover:text-yellow-400">
               <FaFileAlt /> OCR
             </Link>
+            <Link to="/profile" className="flex items-center space-x-2 hover:text-yellow-400">
+              <FaUser /> Profile
+            </Link>
           </nav>
          
           {isLoggedIn && (

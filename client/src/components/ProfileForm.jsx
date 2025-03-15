@@ -1,5 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { FaUser, FaChevronDown, FaHome, FaChartBar, FaFileAlt } from 'react-icons/fa';
+import { Menu, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
 
 const ProfileForm = () => {
     const [formData, setFormData] = useState({
@@ -13,6 +17,49 @@ const ProfileForm = () => {
     });
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [userName, setUserName] = useState('');
+    const [hasProfile, setHasProfile] = useState(false);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user) {
+            setIsLoggedIn(true);
+            setUserName(user.name);
+            checkProfileAndFetch();
+        } else {
+            navigate('/login');
+        }
+    }, [navigate]);
+
+    const checkProfileAndFetch = async () => {
+        try {
+            // First check if profile exists
+            const existsResponse = await axios.get('http://localhost:4000/profile/exists', { withCredentials: true });
+            setHasProfile(existsResponse.data.exists);
+
+            if (existsResponse.data.exists) {
+                // If profile exists, fetch it
+                const profileResponse = await axios.get('http://localhost:4000/profile', { withCredentials: true });
+                if (profileResponse.data.profile) {
+                    setFormData(profileResponse.data.profile);
+                }
+            }
+        } catch (err) {
+            setError('Failed to fetch profile data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('user');
+        setIsLoggedIn(false);
+        setUserName('');
+        navigate('/login');
+    };
 
     const handleChange = (e) => {
         setFormData({
@@ -21,117 +68,227 @@ const ProfileForm = () => {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(null); // Clear previous error before making the request
-        setSuccessMessage(null); // Clear previous success message
+        setError(null);
+        setSuccessMessage(null);
 
-        // Submit form data to create or update the profile for the logged-in user
-        axios.post('http://localhost:4000/profile', formData, { withCredentials: true })
-            .then(response => {
-                setSuccessMessage("Profile saved successfully!");
-                setError(null); // Clear any error messages after successful submission
-                // Reset form fields if needed
-                setFormData({
-                    firstName: '',
-                    lastName: '',
-                    age: '',
-                    gender: '',
-                    contact: '',
-                    address: '',
-                    medicalHistory: ''
-                });
-            })
-            .catch(err => setError('Error saving profile'));
+        try {
+            const response = await axios.post('http://localhost:4000/profile', formData, { withCredentials: true });
+            setSuccessMessage(response.data.message);
+            setHasProfile(true);
+        } catch (err) {
+            setError(err.response?.data?.error || 'Error saving profile');
+        }
     };
 
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+                <div className="text-xl text-gray-800">Loading...</div>
+            </div>
+        );
+    }
+
     return (
-        <div className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-md">
-            {error && <p className="text-red-500">{error}</p>}
-            {successMessage && <p className="text-green-500">{successMessage}</p>}
+        <div className="min-h-screen bg-gray-100">
+            {/* Header */}
+            <header className="bg-[#6C5BD4] p-4 shadow-lg text-white">
+                <div className="container mx-auto flex flex-wrap items-center justify-between">
+                    <h1 className="text-2xl font-bold">MyLabVerse</h1>
+                    <nav className="flex items-center space-x-6 text-sm sm:text-base">
+                        <Link to="/userdashboard" className="flex items-center space-x-2 hover:text-yellow-400">
+                            <FaHome /> Dashboard
+                        </Link>
+                        <Link to="/viewreport" className="flex items-center space-x-2 hover:text-yellow-400">
+                            <FaFileAlt /> Reports
+                        </Link>
+                        <Link to="/graph" className="flex items-center space-x-2 hover:text-yellow-400">
+                            <FaChartBar /> Graph Analysis
+                        </Link>
+                        <Link to="/prescriptionocr" className="flex items-center space-x-2 hover:text-yellow-400">
+                            <FaFileAlt /> OCR
+                        </Link>
+                    </nav>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <h2 className="text-2xl font-semibold text-gray-800">Create or Update Profile</h2>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <input
-                        type="text"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleChange}
-                        placeholder="First Name"
-                        required
-                        className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <input
-                        type="text"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleChange}
-                        placeholder="Last Name"
-                        required
-                        className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    {isLoggedIn && (
+                        <Menu as="div" className="relative">
+                            <Menu.Button className="flex items-center space-x-2 bg-[#6C5BD4] hover:bg-blue-700 text-white px-4 py-2 rounded-md">
+                                <FaUser />
+                                <span className="text-sm sm:text-lg">{userName}</span>
+                                <FaChevronDown />
+                            </Menu.Button>
+                            <Transition
+                                as={Fragment}
+                                enter="transition ease-out duration-200"
+                                enterFrom="opacity-0 scale-95"
+                                enterTo="opacity-100 scale-100"
+                                leave="transition ease-in duration-100"
+                                leaveFrom="opacity-100 scale-100"
+                                leaveTo="opacity-0 scale-95"
+                            >
+                                <Menu.Items className="absolute right-0 mt-2 w-48 bg-white text-gray-700 rounded-lg shadow-lg">
+                                    <Menu.Item>
+                                        {({ active }) => (
+                                            <Link
+                                                to="/profile"
+                                                className={`${active ? 'bg-gray-100' : ''} block px-4 py-2 text-gray-700 hover:bg-gray-200`}
+                                            >
+                                                Profile
+                                            </Link>
+                                        )}
+                                    </Menu.Item>
+                                    <Menu.Item>
+                                        {({ active }) => (
+                                            <button
+                                                onClick={handleLogout}
+                                                className={`block w-full text-left px-4 py-2 ${active ? 'bg-gray-100' : ''}`}
+                                            >
+                                                Logout
+                                            </button>
+                                        )}
+                                    </Menu.Item>
+                                </Menu.Items>
+                            </Transition>
+                        </Menu>
+                    )}
                 </div>
+            </header>
 
-                <input
-                    type="number"
-                    name="age"
-                    value={formData.age}
-                    onChange={handleChange}
-                    placeholder="Age"
-                    required
-                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+            {/* Main Content */}
+            <main className="container mx-auto px-4 py-8">
+                <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
+                    {error && (
+                        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                            {error}
+                        </div>
+                    )}
+                    {successMessage && (
+                        <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+                            {successMessage}
+                        </div>
+                    )}
 
-                <select
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleChange}
-                    required
-                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                    <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                </select>
+                    <h2 className="text-3xl font-semibold text-center mb-8">
+                        {hasProfile ? 'Update Your Profile' : 'Create Your Profile'}
+                    </h2>
 
-                <input
-                    type="text"
-                    name="contact"
-                    value={formData.contact}
-                    onChange={handleChange}
-                    placeholder="Contact"
-                    required
-                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    First Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="firstName"
+                                    value={formData.firstName}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Last Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="lastName"
+                                    value={formData.lastName}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                        </div>
 
-                <input
-                    type="text"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    placeholder="Address"
-                    required
-                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Age
+                                </label>
+                                <input
+                                    type="number"
+                                    name="age"
+                                    value={formData.age}
+                                    onChange={handleChange}
+                                    required
+                                    min="0"
+                                    max="150"
+                                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Gender
+                                </label>
+                                <select
+                                    name="gender"
+                                    value={formData.gender}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
 
-                <textarea
-                    name="medicalHistory"
-                    value={formData.medicalHistory}
-                    onChange={handleChange}
-                    placeholder="Medical History (optional)"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Contact Number
+                            </label>
+                            <input
+                                type="tel"
+                                name="contact"
+                                value={formData.contact}
+                                onChange={handleChange}
+                                required
+                                pattern="[0-9]{10}"
+                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
 
-                <button
-                    type="submit"
-                    className="w-full py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
-                    Save Profile
-                </button>
-            </form>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Address
+                            </label>
+                            <textarea
+                                name="address"
+                                value={formData.address}
+                                onChange={handleChange}
+                                required
+                                rows="3"
+                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Medical History (Optional)
+                            </label>
+                            <textarea
+                                name="medicalHistory"
+                                value={formData.medicalHistory}
+                                onChange={handleChange}
+                                rows="4"
+                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="w-full bg-[#6C5BD4] text-white py-3 rounded-md hover:bg-[#5544b4] transition-colors duration-200"
+                        >
+                            {hasProfile ? 'Update Profile' : 'Create Profile'}
+                        </button>
+                    </form>
+                </div>
+            </main>
         </div>
     );
 };

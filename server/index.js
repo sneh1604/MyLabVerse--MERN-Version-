@@ -12,6 +12,9 @@ const HemogramReportModel = require('./models/HemogramReport');
 const LipidReportModel = require('./models/LipidReport');
 const LipidReport = require('./models/LipidReport');
 const BloodSugarReport = require('./models/BloodSugar');
+const AdministratorModel = require('./models/Administrator');
+const StaffActivityModel = require('./models/StaffActivity');
+const PerformanceMetricsModel = require('./models/PerformanceMetrics');
 dotenv.config();
 const app = express();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -64,31 +67,244 @@ const verifyUser = (req, res, next) => {
     }
 };
 
+// Verify Administrator middleware
+const verifyAdministrator = (req, res, next) => {
+    const token = req.cookies.token || req.query.token || req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        return res.status(403).json("Token is missing");
+    } else {
+        jwt.verify(token, 'wfiefcwmim', (err, decoded) => {
+            if (err) {
+                return res.status(403).json("Error with token");
+            } else {
+                if (decoded.role !== 'administrator') {
+                    return res.status(403).json("Access denied: Administrator role required");
+                }
+                req.user = decoded;
+                next();
+            }
+        });
+    }
+};
 
 app.get("/dashboard", verifyUser, (req, res) => {
     res.json("Success");
     return res.json({ message: "Successfully logged in admin" });
 });
 
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
     const { email, password } = req.body;
-    UserModel.findOne({ email: email })
-        .then(user => {
-            if (user) {
-                bcrypt.compare(password, user.password, (err, response) => {
+    try {
+        const user = await UserModel.findOne({ email: email });
+        if (user) {
+            const match = await bcrypt.compare(password, user.password);
+            if (match) {
+                const token = jwt.sign({ email: user.email, role: user.role, id: user._id }, "wfiefcwmim", { expiresIn: '1d' });
+                res.cookie('token', token);
+                
+                // Track login for admin users
+                if (user.role === 'admin') {
+                    await trackStaffActivity(user._id, 'login');
+                }
+                
+                return res.json({ 
+                    Status: "Success", 
+                    role: user.role, 
+                    name: user.name, 
+                    email: user.email 
+                });
+            } else {
+                return res.json({ message: "The Password is incorrect" });
+            }
+        } else {
+            return res.json({ message: "No Record Existed!" });
+        }
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Server error during login" });
+    }
+});
+
+app.post("/administrator/login", (req, res) => {
+    const { email, password } = req.body;
+    AdministratorModel.findOne({ email: email })
+        .then(admin => {
+            if (admin) {
+                bcrypt.compare(password, admin.password, (err, response) => {
                     if (response) {
-                        const token = jwt.sign({ email: user.email, role: user.role }, "wfiefcwmim", { expiresIn: '1d' });
+                        const token = jwt.sign(
+                            { email: admin.email, role: admin.role, id: admin._id }, 
+                            "wfiefcwmim", 
+                            { expiresIn: '1d' }
+                        );
                         res.cookie('token', token);
-                        return res.json({ Status: "Success", role: user.role });
+                        return res.json({ 
+                            Status: "Success", 
+                            role: admin.role, 
+                            name: admin.name, 
+                            email: admin.email 
+                        });
                     } else {
                         return res.json({ message: "The Password is incorrect" });
                     }
                 });
             } else {
-                return res.json({ message: "No Record Existed!" });
+                return res.json({ message: "No Administrator Found!" });
             }
         });
 });
+
+// Register new administrator (only existing administrators can create new ones)
+app.post('/administrator/register', verifyAdministrator, (req, res) => {
+    const { name, email, password, contactNumber, position } = req.body;
+    bcrypt.hash(password, 10)
+        .then(hash => {
+            AdministratorModel.create({ 
+                name, 
+                email, 
+                password: hash, 
+                contactNumber, 
+                position 
+            })
+                .then(admin => {
+                    res.json({
+                        status: "Success",
+                        message: "Administrator registered successfully"
+                    });
+                })
+                .catch(err => res.status(500).json({ error: err.message }));
+        }).catch(error => res.status(500).json({ error: error.message }));
+});
+
+// Get all staff members (admins)
+app.get('/administrator/staff', verifyAdministrator, (req, res) => {
+    UserModel.find({ role: 'admin' })
+        .select('name email _id')
+        .then(staff => res.json(staff))
+        .catch(err => res.status(500).json({ error: 'Failed to fetch staff list', details: err }));
+});
+
+// Get staff activity logs
+app.get('/administrator/staff-activities', verifyAdministrator, async (req, res) => {
+    try {
+        const { staffId, startDate, endDate, activityType } = req.query;
+        
+        let query = {};
+        
+        if (staffId) query.staffId = staffId;
+        if (activityType) query.activityType = activityType;
+        
+        if (startDate || endDate) {
+            query.timestamp = {};
+            if (startDate) query.timestamp.$gte = new Date(startDate);
+            if (endDate) query.timestamp.$lte = new Date(endDate);
+        }
+        
+        const activities = await StaffActivityModel.find(query)
+            .sort({ timestamp: -1 })
+            .populate('staffId', 'name email')
+            .limit(100);
+            
+        res.json(activities);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch staff activities', details: error.message });
+    }
+});
+
+// Get performance metrics for staff
+app.get('/administrator/performance-metrics', verifyAdministrator, async (req, res) => {
+    try {
+        const { staffId, startDate, endDate } = req.query;
+        
+        let query = {};
+        
+        if (staffId) query.staffId = staffId;
+        
+        if (startDate || endDate) {
+            query.date = {};
+            if (startDate) query.date.$gte = new Date(startDate);
+            if (endDate) query.date.$lte = new Date(endDate);
+        }
+        
+        const metrics = await PerformanceMetricsModel.find(query)
+            .sort({ date: -1 })
+            .populate('staffId', 'name email');
+            
+        res.json(metrics);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch performance metrics', details: error.message });
+    }
+});
+
+// Get aggregated laboratory statistics
+app.get('/administrator/lab-statistics', verifyAdministrator, async (req, res) => {
+    try {
+        // Total reports by type
+        const hemogramCount = await HemogramReportModel.countDocuments();
+        const lipidCount = await LipidReportModel.countDocuments();
+        const bloodSugarCount = await BloodSugarReport.countDocuments();
+        
+        // Total clients
+        const clientCount = await UserModel.countDocuments({ role: { $ne: 'admin' } });
+        
+        // Total staff (admins)
+        const staffCount = await UserModel.countDocuments({ role: 'admin' });
+        
+        // Reports per day (last 7 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        
+        const dailyReports = await Promise.all([
+            HemogramReportModel.aggregate([
+                { $match: { created_at: { $gte: sevenDaysAgo } } },
+                { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$created_at" } }, count: { $sum: 1 } } },
+                { $sort: { _id: 1 } }
+            ]),
+            LipidReport.aggregate([
+                { $match: { dateCreated: { $gte: sevenDaysAgo } } },
+                { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$dateCreated" } }, count: { $sum: 1 } } },
+                { $sort: { _id: 1 } }
+            ]),
+            BloodSugarReport.aggregate([
+                { $match: { dateCreated: { $gte: sevenDaysAgo } } },
+                { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$dateCreated" } }, count: { $sum: 1 } } },
+                { $sort: { _id: 1 } }
+            ])
+        ]);
+        
+        res.json({
+            totalReports: {
+                hemogram: hemogramCount,
+                lipid: lipidCount,
+                bloodSugar: bloodSugarCount,
+                total: hemogramCount + lipidCount + bloodSugarCount
+            },
+            clientCount,
+            staffCount,
+            dailyReports: {
+                hemogram: dailyReports[0],
+                lipid: dailyReports[1],
+                bloodSugar: dailyReports[2]
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch laboratory statistics', details: error.message });
+    }
+});
+
+// Track staff activity (middleware or direct call)
+const trackStaffActivity = async (staffId, activityType, details = {}) => {
+    try {
+        await StaffActivityModel.create({
+            staffId,
+            activityType,
+            details,
+            timestamp: new Date()
+        });
+    } catch (error) {
+        console.error('Error tracking staff activity:', error);
+    }
+};
 
 app.get('/registered-users', verifyUser, (req, res) => {
     UserModel.find()
@@ -135,21 +351,60 @@ app.delete('/test-list/:id', verifyUser, (req, res) => {
         .catch(err => res.status(400).json(err));
 });
 
-app.post('/hemogram-report', verifyUser, (req, res) => {
+app.post('/hemogram-report', verifyUser, async (req, res) => {
     const reportData = req.body;
-    console.log('Received report data:', reportData);  // Log the data sent from the client
-
-    // Validate required fields (adjust as needed based on your model)
-    if (!reportData.clientId || !reportData.hemoglobin || !reportData.rbc_count || !reportData.wbc_count || !reportData.platelet_count) {
-        return res.status(400).json({ error: 'Missing required fields' });
+    
+    try {
+        if (!reportData.clientId || !reportData.hemoglobin || !reportData.rbc_count || !reportData.wbc_count || !reportData.platelet_count) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        
+        const report = await HemogramReportModel.create(reportData);
+        
+        // Track activity if the user is an admin
+        if (req.user.role === 'admin') {
+            await trackStaffActivity(
+                req.user.id, 
+                'report_creation', 
+                { 
+                    reportType: 'hemogram', 
+                    clientId: reportData.clientId,
+                    action: 'create'
+                }
+            );
+            
+            // Update performance metrics
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const metrics = await PerformanceMetricsModel.findOne({
+                staffId: req.user.id,
+                date: { $gte: today }
+            });
+            
+            if (metrics) {
+                metrics.reportsGenerated += 1;
+                metrics.testsProcessed += 1;
+                metrics.reportTypes.hemogram += 1;
+                await metrics.save();
+            } else {
+                await PerformanceMetricsModel.create({
+                    staffId: req.user.id,
+                    reportsGenerated: 1,
+                    testsProcessed: 1,
+                    clientsServed: 1,
+                    reportTypes: {
+                        hemogram: 1
+                    }
+                });
+            }
+        }
+        
+        res.json({ message: 'Report submitted successfully', report });
+    } catch (err) {
+        console.error('Error saving report:', err);
+        res.status(400).json({ error: 'Failed to submit report', details: err });
     }
-
-    HemogramReportModel.create(reportData)
-        .then(report => res.json({ message: 'Report submitted successfully', report }))
-        .catch(err => {
-            console.error('Error saving report:', err);
-            res.status(400).json({ error: 'Failed to submit report', details: err });
-        });
 });
 
 app.get('/hemogram-reports', verifyUser, async (req, res) => {
@@ -161,6 +416,42 @@ app.get('/hemogram-reports', verifyUser, async (req, res) => {
 
 });
 
+// Add the missing hemogram-report route (single report endpoint)
+app.get('/hemogram-report/:id', verifyUser, async (req, res) => {
+    try {
+        const report = await HemogramReportModel.findById(req.params.id);
+        if (!report) {
+            return res.status(404).json({ message: "Report not found" });
+        }
+        res.json(report);
+    } catch (err) {
+        console.error('Error fetching hemogram report:', err);
+        res.status(500).json({ error: 'Failed to fetch report', details: err });
+    }
+});
+
+// Add a general route to fetch a single hemogram report by ID (without authentication)
+// This can be used for sharing reports with healthcare providers
+app.get('/public/hemogram-report/:id/:token', async (req, res) => {
+    try {
+        // Simple token validation - in production, use a more secure method
+        const { id, token } = req.params;
+        
+        // Check if token is valid (this is a simple example)
+        if (token !== 'public-access-token') {
+            return res.status(403).json({ error: 'Invalid access token' });
+        }
+        
+        const report = await HemogramReportModel.findById(id);
+        if (!report) {
+            return res.status(404).json({ message: "Report not found" });
+        }
+        res.json(report);
+    } catch (err) {
+        console.error('Error fetching public hemogram report:', err);
+        res.status(500).json({ error: 'Failed to fetch report', details: err });
+    }
+});
 
 app.get('/hemogram-graph', verifyUser, async (req, res) => {
     try {
@@ -200,6 +491,21 @@ app.get('/hemogram-graph', verifyUser, async (req, res) => {
 app.post('/logout', (req, res) => {
     res.clearCookie('token');
     return res.json({ message: 'Logout successful' });
+});
+
+app.post('/admin-logout', verifyUser, async (req, res) => {
+    try {
+        // Track logout for admin users
+        if (req.user.role === 'admin') {
+            await trackStaffActivity(req.user.id, 'logout');
+        }
+        
+        res.clearCookie('token');
+        return res.json({ message: 'Logout successful' });
+    } catch (error) {
+        console.error('Error during logout:', error);
+        res.status(500).json({ error: 'Error during logout' });
+    }
 });
 
 app.get('/is-logged-in', (req, res) => {
@@ -280,43 +586,134 @@ app.post('/profile', verifyUser, async (req, res) => {
     const { firstName, lastName, age, gender, contact, address, medicalHistory } = req.body;
     
     try {
-        // Check if profile already exists for the user
-        const existingProfile = await ProfileModel.findOne({ userId: req.user._id });
-        if (existingProfile) {
-            return res.status(400).json({ message: "Profile already exists" });
+        // Validate input data
+        if (!firstName || !lastName || !age || !gender || !contact || !address) {
+            return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        // Create new profile
-        const profile = await ProfileModel.create({
-            userId: req.user._id,
-            firstName,
-            lastName,
-            age,
-            gender,
-            contact,
-            address,
-            medicalHistory
-        });
+        // Validate age
+        if (age < 0 || age > 150) {
+            return res.status(400).json({ error: 'Invalid age' });
+        }
 
-        res.json({ message: 'Profile created successfully', profile });
+        // Validate contact number
+        const contactRegex = /^\d{10}$/;  // Assumes 10-digit phone number
+        if (!contactRegex.test(contact)) {
+            return res.status(400).json({ error: 'Invalid contact number format' });
+        }
+
+        // Find existing profile or create new one (upsert)
+        const profile = await ProfileModel.findOneAndUpdate(
+            { userId: req.user.id },
+            {
+                firstName,
+                lastName,
+                age,
+                gender,
+                contact,
+                address,
+                medicalHistory,
+                updatedAt: new Date()
+            },
+            { 
+                new: true,        // Return updated document
+                upsert: true,     // Create if doesn't exist
+                runValidators: true // Run model validations
+            }
+        );
+
+        res.json({ 
+            message: 'Profile saved successfully', 
+            profile,
+            isNewProfile: !profile.createdAt
+        });
     } catch (err) {
-        console.error('Error creating profile:', err);
-        res.status(500).json({ error: 'Failed to create profile' });
+        console.error('Error saving profile:', err);
+        res.status(500).json({ 
+            error: 'Failed to save profile',
+            details: err.message 
+        });
     }
 });
 
-// Endpoint to fetch the profile of the logged-in user
 app.get('/profile', verifyUser, async (req, res) => {
     try {
-        const profile = await ProfileModel.findOne({ userId: req.user._id });
+        const profile = await ProfileModel.findOne({ userId: req.user.id })
+            .select('-__v'); // Exclude version key
+
         if (!profile) {
-            return res.status(404).json({ message: "Profile not found" });
+            return res.status(404).json({ 
+                message: "Profile not found",
+                shouldCreate: true
+            });
         }
-        res.json(profile);
+
+        res.json({
+            profile,
+            lastUpdated: profile.updatedAt
+        });
     } catch (err) {
         console.error('Error fetching profile:', err);
-        res.status(500).json({ error: 'Failed to fetch profile' });
+        res.status(500).json({ 
+            error: 'Failed to fetch profile',
+            details: err.message 
+        });
     }
+});
+
+// Add endpoint to check if profile exists
+app.get('/profile/exists', verifyUser, async (req, res) => {
+    try {
+        const profile = await ProfileModel.findOne({ userId: req.user.id });
+        res.json({ exists: !!profile });
+    } catch (err) {
+        console.error('Error checking profile existence:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Initial administrator setup endpoint (used only for the first administrator)
+app.post('/initial-administrator-setup', async (req, res) => {
+    try {
+        // Check if there are any existing administrators
+        const existingAdmin = await AdministratorModel.findOne();
+        if (existingAdmin) {
+            return res.status(403).json({ error: 'Administrator already exists. Initial setup is not allowed.' });
+        }
+
+        const { name, email, password, contactNumber, position } = req.body;
+        
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Create the administrator
+        const admin = await AdministratorModel.create({
+            name,
+            email,
+            password: hashedPassword,
+            contactNumber,
+            position
+        });
+        
+        res.json({
+            status: "Success",
+            message: "Initial administrator setup completed successfully"
+        });
+    } catch (err) {
+        console.error('Error during initial administrator setup:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Check if any administrators exist
+app.get('/check-admin-exists', async (req, res) => {
+  try {
+    const adminCount = await AdministratorModel.countDocuments();
+    res.json({ exists: adminCount > 0 });
+  } catch (err) {
+    console.error('Error checking admin existence:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 app.listen(4000, () => {

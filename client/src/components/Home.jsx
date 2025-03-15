@@ -4,6 +4,7 @@ import { FaUser, FaFileMedical, FaBell, FaHeartbeat } from 'react-icons/fa'; // 
 import { FiMenu } from 'react-icons/fi';
 import logo from './../assets/logo.png'; // Assuming the path to the image is here
 import hero from './../assets/image.png';
+import AdminAccessButton from './AdminAccessButton'; // Import the new component
 
 const Home = () => {
   const navigate = useNavigate();
@@ -219,6 +220,7 @@ const Home = () => {
       </section>
 
       </main>
+      <AdminAccessButton />
     </div>
   );
 };
