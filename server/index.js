@@ -522,11 +522,59 @@ app.get('/is-logged-in', (req, res) => {
     });
 });
 
-app.post('/lipid-report', verifyUser, (req, res) => {
+app.post('/lipid-report', verifyUser, async (req, res) => {
     const reportData = req.body;
-    LipidReport.create(reportData)
-        .then(report => res.json({ message: 'Report submitted successfully', report }))
-        .catch(err => res.status(400).json({ error: 'Failed to submit report', details: err }));
+    try {
+        if (!reportData.clientId || !reportData.serumCholesterol || !reportData.ldlCholesterol || !reportData.totalCholesterolHdlRatio || !reportData.totalLipids) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        
+        const report = await LipidReportModel.create(reportData);
+        
+        // Track activity if the user is an admin
+        if (req.user.role === 'admin') {
+            await trackStaffActivity(
+                req.user.id, 
+                'report_creation', 
+                { 
+                    reportType: 'lipid', 
+                    clientId: reportData.clientId,
+                    action: 'create'
+                }
+            );
+            
+            // Update performance metrics
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const metrics = await PerformanceMetricsModel.findOne({
+                staffId: req.user.id,
+                date: { $gte: today }
+            });
+            
+            if (metrics) {
+                metrics.reportsGenerated += 1;
+                metrics.testsProcessed += 1;
+                metrics.reportTypes.lipid += 1;
+                await metrics.save();
+            } else {
+                await PerformanceMetricsModel.create({
+                    staffId: req.user.id,
+                    reportsGenerated: 1,
+                    testsProcessed: 1,
+                    clientsServed: 1,
+                    reportTypes: {
+                        lipid: 1
+                    }
+                });
+            }
+        }
+        
+        res.json({ message: 'Report submitted successfully', report });
+    } catch (err) {
+        console.error('Error saving report:', err);
+        res.status(400).json({ error: 'Failed to submit report', details: err });
+    }
 });
 
 app.get('/lipid-report', verifyUser, async (req, res) => {
@@ -538,11 +586,59 @@ app.get('/lipid-report', verifyUser, async (req, res) => {
 
 });
 
-app.post('/blood-sugar-report', verifyUser, (req, res) => {
+app.post('/blood-sugar-report', verifyUser, async (req, res) => {
     const reportData = req.body;
-    BloodSugarReport.create(reportData)
-        .then(report => res.json({ message: 'Report submitted successfully', report }))
-        .catch(err => res.status(400).json({ error: 'Failed to submit report', details: err }));
+    try {
+        if (!reportData.clientId || !reportData.fastingBloodSugar || !reportData.totalCholesterol || !reportData.postprandialBloodSugar) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        
+        const report = await BloodSugarReport.create(reportData);
+        
+        // Track activity if the user is an admin
+        if (req.user.role === 'admin') {
+            await trackStaffActivity(
+                req.user.id, 
+                'report_creation', 
+                { 
+                    reportType: 'blood_sugar', 
+                    clientId: reportData.clientId,
+                    action: 'create'
+                }
+            );
+            
+            // Update performance metrics
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const metrics = await PerformanceMetricsModel.findOne({
+                staffId: req.user.id,
+                date: { $gte: today }
+            });
+            
+            if (metrics) {
+                metrics.reportsGenerated += 1;
+                metrics.testsProcessed += 1;
+                metrics.reportTypes.bloodSugar += 1;
+                await metrics.save();
+            } else {
+                await PerformanceMetricsModel.create({
+                    staffId: req.user.id,
+                    reportsGenerated: 1,
+                    testsProcessed: 1,
+                    clientsServed: 1,
+                    reportTypes: {
+                        bloodSugar: 1
+                    }
+                });
+            }
+        }
+        
+        res.json({ message: 'Report submitted successfully', report });
+    } catch (err) {
+        console.error('Error saving report:', err);
+        res.status(400).json({ error: 'Failed to submit report', details: err });
+    }
 });
 
 app.get('/blood-sugar-report', verifyUser, async (req, res) => {
