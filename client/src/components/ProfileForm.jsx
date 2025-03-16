@@ -93,67 +93,73 @@ const ProfileForm = () => {
     return (
         <div className="min-h-screen bg-gray-100">
             {/* Header */}
-            <header className="bg-[#6C5BD4] p-4 shadow-lg text-white">
-                <div className="container mx-auto flex flex-wrap items-center justify-between">
-                    <h1 className="text-2xl font-bold">MyLabVerse</h1>
-                    <nav className="flex items-center space-x-6 text-sm sm:text-base">
-                        <Link to="/userdashboard" className="flex items-center space-x-2 hover:text-yellow-400">
-                            <FaHome /> Dashboard
+            <header className="bg-[#6C5BD4] text-white shadow-lg">
+                    <div className="container mx-auto flex justify-between items-center py-4 px-6">
+                      {/* Logo and Brand */}
+                      <div className="flex items-center space-x-2">
+                        <h1 className="text-2xl font-bold cursor-pointer" onClick={() => navigate('/')}>MyLabVerse</h1>
+                      </div>
+            
+                      {/* Navigation Links */}
+                      <nav className="hidden md:flex items-center space-x-6">
+                        <Link to="/userdashboard" className="flex items-center space-x-2 hover:text-yellow-300 font-medium transition duration-200">
+                          <FaHome /> <span>Dashboard</span>
                         </Link>
-                        <Link to="/viewreport" className="flex items-center space-x-2 hover:text-yellow-400">
-                            <FaFileAlt /> Reports
+                        <Link to="/viewreport" className="flex items-center space-x-2 hover:text-yellow-300 font-medium transition duration-200">
+                          <FaFileAlt /> <span>Reports</span>
                         </Link>
-                        <Link to="/graph" className="flex items-center space-x-2 hover:text-yellow-400">
-                            <FaChartBar /> Graph Analysis
+                        <Link to="/graph" className="flex items-center space-x-2 hover:text-yellow-300 font-medium transition duration-200">
+                          <FaChartBar /> <span>Analytics</span>
                         </Link>
-                        <Link to="/prescriptionocr" className="flex items-center space-x-2 hover:text-yellow-400">
-                            <FaFileAlt /> OCR
+                        <Link to="/prescriptionocr" className="flex items-center space-x-2 hover:text-yellow-300 font-medium transition duration-200">
+                          <FaFileAlt /> <span>OCR</span>
                         </Link>
-                    </nav>
-
-                    {isLoggedIn && (
+                      </nav>
+            
+                      {/* User Menu */}
+                      {isLoggedIn && (
                         <Menu as="div" className="relative">
-                            <Menu.Button className="flex items-center space-x-2 bg-[#6C5BD4] hover:bg-blue-700 text-white px-4 py-2 rounded-md">
-                                <FaUser />
-                                <span className="text-sm sm:text-lg">{userName}</span>
-                                <FaChevronDown />
-                            </Menu.Button>
-                            <Transition
-                                as={Fragment}
-                                enter="transition ease-out duration-200"
-                                enterFrom="opacity-0 scale-95"
-                                enterTo="opacity-100 scale-100"
-                                leave="transition ease-in duration-100"
-                                leaveFrom="opacity-100 scale-100"
-                                leaveTo="opacity-0 scale-95"
-                            >
-                                <Menu.Items className="absolute right-0 mt-2 w-48 bg-white text-gray-700 rounded-lg shadow-lg">
-                                    <Menu.Item>
-                                        {({ active }) => (
-                                            <Link
-                                                to="/profile"
-                                                className={`${active ? 'bg-gray-100' : ''} block px-4 py-2 text-gray-700 hover:bg-gray-200`}
-                                            >
-                                                Profile
-                                            </Link>
-                                        )}
-                                    </Menu.Item>
-                                    <Menu.Item>
-                                        {({ active }) => (
-                                            <button
-                                                onClick={handleLogout}
-                                                className={`block w-full text-left px-4 py-2 ${active ? 'bg-gray-100' : ''}`}
-                                            >
-                                                Logout
-                                            </button>
-                                        )}
-                                    </Menu.Item>
-                                </Menu.Items>
-                            </Transition>
+                          <Menu.Button className="flex items-center space-x-2 bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-2 rounded-md transition duration-200">
+                            <FaUser className="text-sm" />
+                            <span className="text-sm font-medium">{userName}</span>
+                            <FaChevronDown className="text-sm" />
+                          </Menu.Button>
+                          <Transition
+                            as={Fragment}
+                            enter="transition ease-out duration-100"
+                            enterFrom="transform opacity-0 scale-95"
+                            enterTo="transform opacity-100 scale-100"
+                            leave="transition ease-in duration-75"
+                            leaveFrom="transform opacity-100 scale-100"
+                            leaveTo="transform opacity-0 scale-95"
+                          >
+                            <Menu.Items className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 py-1">
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <Link
+                                    to="/profile"
+                                    className={`${active ? 'bg-gray-100' : ''} block px-4 py-2 text-gray-700`}
+                                  >
+                                    Profile
+                                  </Link>
+                                )}
+                              </Menu.Item>
+                              <Menu.Item>
+                                {({ active }) => (
+                                  <button
+                                    onClick={handleLogout}
+                                    className={`${active ? 'bg-gray-100' : ''} block px-4 py-2 text-gray-700 w-full text-left`}
+                                  >
+                                    Logout
+                                  </button>
+                                )}
+                              </Menu.Item>
+                            </Menu.Items>
+                          </Transition>
                         </Menu>
-                    )}
-                </div>
-            </header>
+                      )}
+                    </div>
+                  </header>
 
             {/* Main Content */}
             <main className="container mx-auto px-4 py-8">

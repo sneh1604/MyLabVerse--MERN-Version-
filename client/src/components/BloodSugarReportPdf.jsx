@@ -1,23 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
-import axios from 'axios';
+import axios from "axios";
+import { FaDownload, FaArrowLeft, FaPrint, FaSpinner } from "react-icons/fa";
 
 const BloodSugarPdf = () => {
   const { state } = useLocation();
   const { report } = state; // Blood sugar report data passed from ViewReport
   const [summary, setSummary] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const navigate = useNavigate();
 
   // Function to fetch summary and steps
   const fetchSummary = (rep) => {
+    setIsLoading(true);
     axios
       .post("http://localhost:4000/aiml", { report: rep }, {
         withCredentials: true,
       })
       .then((response) => {
         try {
-          // Parse response safely
           const parsedResponse =
             typeof response.data === "string"
               ? JSON.parse(response.data.replace(/```json|```/g, "").trim())
@@ -31,200 +36,146 @@ const BloodSugarPdf = () => {
       })
       .catch((error) => {
         console.error("Error submitting report:", error);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   };
 
-  // PDF download logic
+  // PDF download logic (Fixed for proper layout)
   const handleDownloadPdf = () => {
+    setIsPdfGenerating(true);
     const element = document.getElementById("report-content");
-    const scale = 3; // Higher scale for better resolution
-  
+
     html2canvas(element, {
-      scale: scale, // Increase scale for better clarity
-      useCORS: true, // To avoid CORS issues if any external content is present
+      scale: 2, // Improves resolution
+      useCORS: true,
     }).then((canvas) => {
       const imgData = canvas.toDataURL("image/png");
-  
-      const pdf = new jsPDF("p", "mm", "a4");
-      const imgWidth = 210; // Width of A4 in mm
-      const pageHeight = 297; // Height of A4 in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-  
-      let heightLeft = imgHeight;
-      let position = 0;
-  
-      // Add the image to the PDF
+      const pdf = new jsPDF("p", "mm", "a4"); // A4 size
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width; // Maintain aspect ratio
+
+      let position = 10;
       pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-  
-      // If the image is taller than the page, we need to add pages
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+
+      if (imgHeight > 280) {
+        let heightLeft = imgHeight - 280;
+        position = -280;
+        while (heightLeft > 0) {
+          pdf.addPage();
+          pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+          heightLeft -= 280;
+          position -= 280;
+        }
       }
-  
-      // Add a new page for the summary and steps after the image
-      pdf.addPage();
-      pdf.setFontSize(12);
-      let yPosition = 20; // Initialize yPosition after the image
-      
-      // Leave some space after the image before adding the summary
-      yPosition += 10; // Adjust this value to your preference for spacing
-  
-      // Add summary to the PDF
-      pdf.text(`Summary: ${summary.summary || "No summary available."}`, 10, yPosition);
-      yPosition += 10;
-  
-      // Add recommendations if available
-      if (summary.recommendations) {
-        pdf.text("Recommendations:", 10, yPosition);
-        yPosition += 10;
-        summary.recommendations.forEach((rec, index) => {
-          pdf.text(`${index + 1}. ${rec}`, 10, yPosition);
-          yPosition += 10;
-        });
-      }
-  
-      // Add control steps if available
-      if (summary.controlSteps) {
-        pdf.text("Control Steps:", 10, yPosition);
-        yPosition += 10;
-        summary.controlSteps.forEach((step, index) => {
-          pdf.text(`${index + 1}. ${step}`, 10, yPosition);
-          yPosition += 10;
-        });
-      }
-  
-      pdf.save("BloodSugar_Report.pdf");
+
+      pdf.save("blood_sugar_report.pdf");
+      setIsPdfGenerating(false);
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 3000);
     });
   };
-  
 
   useEffect(() => {
     fetchSummary(report);
   }, [report]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Blood Sugar Report</h1>
-        
-        <div id="report-content" className="mb-8">
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-700">Patient Name</h3>
-              <p className="text-xl">{report.clientName}</p>
-            </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-700">Report Date</h3>
-              <p className="text-xl">{new Date().toLocaleDateString()}</p>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse mb-6">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="border border-gray-200 px-4 py-3 text-left text-gray-700">Test</th>
-                  <th className="border border-gray-200 px-4 py-3 text-left text-gray-700">Result</th>
-                  <th className="border border-gray-200 px-4 py-3 text-left text-gray-700">Units</th>
-                  <th className="border border-gray-200 px-4 py-3 text-left text-gray-700">Normal Range</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border">
-                  <td className="border py-2 px-4 font-bold">
-                    Fasting Blood Sugar
-                  </td>
-                  <td className="border py-2 px-4">{report.fastingBloodSugar}</td>
-                  <td className="border py-2 px-4">mg/dL</td>
-                  <td className="border py-2 px-4">70-100</td>
-                </tr>
-                <tr className="border">
-                  <td className="border py-2 px-4 font-bold">
-                    Postprandial Blood Sugar
-                  </td>
-                  <td className="border py-2 px-4">
-                    {report.postprandialBloodSugar}
-                  </td>
-                  <td className="border py-2 px-4">mg/dL</td>
-                  <td className="border py-2 px-4">Less than 140</td>
-                </tr>
-                <tr className="border">
-                  <td className="border py-2 px-4 font-bold">HbA1c</td>
-                  <td className="border py-2 px-4">{report.hba1c}</td>
-                  <td className="border py-2 px-4">%</td>
-                  <td className="border py-2 px-4">Less than 5.7</td>
-                </tr>
-                <tr className="border">
-                  <td className="border py-2 px-4 font-bold">Total Cholesterol</td>
-                  <td className="border py-2 px-4">{report.totalCholesterol}</td>
-                  <td className="border py-2 px-4">mg/dL</td>
-                  <td className="border py-2 px-4">125-200</td>
-                </tr>
-                <tr className="border">
-                  <td className="border py-2 px-4 font-bold">Triglycerides</td>
-                  <td className="border py-2 px-4">{report.triglycerides}</td>
-                  <td className="border py-2 px-4">mg/dL</td>
-                  <td className="border py-2 px-4">Less than 150</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div id="report-summary" className="mb-8">
-          <div className="bg-blue-50 rounded-lg p-6 mb-6">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Analysis Summary</h2>
-            <p className="text-gray-700 mb-4">{summary.summary || "No summary available."}</p>
-          </div>
-
-          {summary.recommendations && (
-            <div className="bg-green-50 rounded-lg p-6 mb-6">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Recommendations</h2>
-              <ul className="space-y-2">
-                {summary.recommendations.map((rec, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="inline-flex items-center justify-center bg-green-100 rounded-full h-6 w-6 text-sm text-green-800 mr-3">
-                      {index + 1}
-                    </span>
-                    <span className="text-gray-700">{rec}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {summary.controlSteps && (
-            <div className="bg-purple-50 rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Control Steps</h2>
-              <ul className="space-y-2">
-                {summary.controlSteps.map((step, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="inline-flex items-center justify-center bg-purple-100 rounded-full h-6 w-6 text-sm text-purple-800 mr-3">
-                      {index + 1}
-                    </span>
-                    <span className="text-gray-700">{step}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-center">
+    <div className="p-8 bg-gray-100 min-h-screen">
+      <div className="flex justify-between items-center mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 flex items-center"
+        >
+          <FaArrowLeft className="mr-2" /> Back
+        </button>
+        <h2 className="text-3xl font-bold text-center">Blood Sugar Report</h2>
+        <div className="flex space-x-4">
           <button
             onClick={handleDownloadPdf}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition duration-300 ease-in-out flex items-center"
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center"
+            disabled={isPdfGenerating}
           >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Download PDF
+            {isPdfGenerating ? (
+              <>
+                <FaSpinner className="mr-2 animate-spin" /> Generating PDF...
+              </>
+            ) : (
+              <>
+                <FaDownload className="mr-2" /> Download PDF
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center"
+          >
+            <FaPrint className="mr-2" /> Print
           </button>
         </div>
+      </div>
+
+      {showSuccessMessage && (
+        <div
+          className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4"
+          role="alert"
+        >
+          <span className="block sm:inline">
+            PDF generated and downloaded successfully!
+          </span>
+        </div>
+      )}
+
+      <div
+        id="report-content"
+        className="bg-white p-6 rounded-lg shadow-lg max-w-4xl mx-auto border border-gray-300"
+      >
+        <div className="flex justify-between mb-4">
+          <h3 className="text-xl font-bold">Patient Name: {report.clientName}</h3>
+          <p className="text-xl font-bold">
+            Today's Date: {new Date().toLocaleDateString()}
+          </p>
+        </div>
+
+        <h3 className="text-2xl font-semibold text-center mb-4">
+          Blood Sugar Report
+        </h3>
+        <table className="w-full mb-6 border-collapse border">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border py-2 px-4">Test</th>
+              <th className="border py-2 px-4">Result</th>
+              <th className="border py-2 px-4">Units</th>
+              <th className="border py-2 px-4">Normals</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              ["Fasting Blood Sugar", report.fastingBloodSugar, "mg/dL", "70-100"],
+              ["Postprandial Blood Sugar", report.postprandialBloodSugar, "mg/dL", "Less than 140"],
+              ["HbA1c", report.hba1c, "%", "Less than 5.7"],
+              ["Total Cholesterol", report.totalCholesterol, "mg/dL", "125-200"],
+              ["Triglycerides", report.triglycerides, "mg/dL", "Less than 150"],
+            ].map(([test, result, unit, normal], index) => (
+              <tr key={index} className="border">
+                <td className="border py-2 px-4 font-bold">{test}</td>
+                <td className="border py-2 px-4">{result}</td>
+                <td className="border py-2 px-4">{unit}</td>
+                <td className="border py-2 px-4">{normal}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="bg-white p-6 rounded-lg shadow-lg max-w-4xl mx-auto border border-gray-300 mt-4">
+        <h1 className="text-xl font-bold mb-2">Summary</h1>
+        {isLoading ? (
+          <p>Loading summary...</p>
+        ) : (
+          <p>{summary.summary || "No summary available."}</p>
+        )}
       </div>
     </div>
   );

@@ -1,17 +1,21 @@
-import React,{ useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import axios from 'axios';
-
+import { FaDownload, FaArrowLeft, FaFlask, FaPrint, FaFileExport, FaSpinner, FaInfoCircle, FaExclamationCircle, FaCheckCircle } from 'react-icons/fa';
 
 const HemogramReportPdf = () => {
   const { state } = useLocation();
-  const { report } = state;   // Report data passed from ViewReport
+  const { report } = state;
   const [summary, setSummary] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const navigate = useNavigate();
 
-  const d = { "Patient Details": { "Name": "PRAGNESH BHAI SHAH", "Age": "94 Years", "Sex": "M" }, "Date and Time": "01/10/2024 07:15", "Prescription Details": { "Medications": [ "HAEMOGRAM" ], "Dosage": null, "Duration": null }, "Special Instructions": null, "Test Results": { "Hemoglobin": "14.2 g/dl", "RBC Count": "5.24 nil/", "WBC Count": "5340 /cmm", "Platelet Count": "185000 /cmm", "PCV": "40.8 %", "MCV": "77.9 fl", "MCH": "27.2 pg", "MCHC": "34.9", "RDW": "14.4", "Differential WBC Count": { "Polymorphs": "82", "Lymphocytes": "13", "Eosinophils": "01", "Monocytes": "045" }, "Smear Study": { "RBC": "Premature Cells _ F", "Platelets": "(on the smear", "Malarial Parasite": null } }, "Reference": "R.D, ASITBHAI DAVE (MBBS)" };
   const fetchSummary = (rep) => {
+    setIsLoading(true);
     axios
       .post("http://localhost:4000/aiml", { report: rep }, {
         withCredentials: true,
@@ -32,16 +36,23 @@ const HemogramReportPdf = () => {
       })
       .catch((error) => {
         console.error("Error submitting report:", error);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   };
 
   const handleDownloadPdf = () => {
+    setIsPdfGenerating(true);
     const element = document.getElementById('report-content');
     html2canvas(element).then((canvas) => {
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF();
       pdf.addImage(imgData, 'PNG', 0, 0, 210, 297); // A4 size
       pdf.save('Hemogram_Report.pdf');
+      setIsPdfGenerating(false);
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 3000);
     });
   };
 
@@ -51,7 +62,45 @@ const HemogramReportPdf = () => {
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
-      <h2 className="text-3xl font-bold text-center mb-6">Hemogram Report</h2>
+      <div className="flex justify-between items-center mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 flex items-center"
+        >
+          <FaArrowLeft className="mr-2" /> Back
+        </button>
+        <h2 className="text-3xl font-bold text-center">Hemogram Report</h2>
+        <div className="flex space-x-4">
+          <button
+            onClick={handleDownloadPdf}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center"
+            disabled={isPdfGenerating}
+          >
+            {isPdfGenerating ? (
+              <>
+                <FaSpinner className="mr-2 animate-spin" /> Generating PDF...
+              </>
+            ) : (
+              <>
+                <FaDownload className="mr-2" /> Download PDF
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center"
+          >
+            <FaPrint className="mr-2" /> Print
+          </button>
+        </div>
+      </div>
+
+      {showSuccessMessage && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <span className="block sm:inline">PDF generated and downloaded successfully!</span>
+        </div>
+      )}
+
       <div id="report-content" className="bg-white p-6 rounded-lg shadow-lg max-w-4xl mx-auto border border-gray-300">
         <div className="flex justify-between mb-4">
           <div>
@@ -199,7 +248,11 @@ const HemogramReportPdf = () => {
         className="bg-white p-6 rounded-lg shadow-lg max-w-4xl mx-auto border border-gray-300 mt-4"
       >
         <h1 className="text-xl font-bold mb-2">Summary</h1>
-        <p>{summary.summary || "No summary available."}</p>
+        {isLoading ? (
+          <p>Loading summary...</p>
+        ) : (
+          <p>{summary.summary || "No summary available."}</p>
+        )}
 
         {summary.recommendations && (
           <div className="mt-4">
@@ -227,13 +280,6 @@ const HemogramReportPdf = () => {
           </div>
         )}
       </div>
-      
-      <button
-        onClick={handleDownloadPdf}
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 mt-4"
-      >
-        Download PDF
-      </button>
     </div>
   );
 };

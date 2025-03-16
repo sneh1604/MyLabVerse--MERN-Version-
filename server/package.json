@@ -1,10 +1,11 @@
 {
-  "name": "server",
+  "name": "mylabverse-server",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js"
+    "start": "node index.js",
+    "install-tesseract": "node install_tesseract.js",
+    "start-ocr": "python server.py"
   },
   "keywords": [],
   "author": "",

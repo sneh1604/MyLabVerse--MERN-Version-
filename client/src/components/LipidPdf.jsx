@@ -1,17 +1,19 @@
-import React , { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import axios from 'axios';
-
+import { FaDownload, FaArrowLeft, FaHeartbeat, FaPrint, FaFileExport } from 'react-icons/fa';
 
 const LipidPdf = () => {
   const { state } = useLocation();
   const { report } = state;
   const [summary, setSummary] = useState("");
-  // Lipid report data passed from ViewReport
-  const d = { "Patient Details": { "Name": "PRAGNESH BHAI SHAH", "Age": "94 Years", "Sex": "M" }, "Date and Time": "01/10/2024 07:15", "Prescription Details": { "Medications": [ "HAEMOGRAM" ], "Dosage": null, "Duration": null }, "Special Instructions": null, "Test Results": { "Hemoglobin": "14.2 g/dl", "RBC Count": "5.24 nil/", "WBC Count": "5340 /cmm", "Platelet Count": "185000 /cmm", "PCV": "40.8 %", "MCV": "77.9 fl", "MCH": "27.2 pg", "MCHC": "34.9", "RDW": "14.4", "Differential WBC Count": { "Polymorphs": "82", "Lymphocytes": "13", "Eosinophils": "01", "Monocytes": "045" }, "Smear Study": { "RBC": "Premature Cells _ F", "Platelets": "(on the smear", "Malarial Parasite": null } }, "Reference": "R.D, ASITBHAI DAVE (MBBS)" };
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+
   const fetchSummary = (rep) => {
+    setIsLoading(true);
     axios
       .post("http://localhost:4000/aiml", { report: rep }, {
         withCredentials: true,
@@ -32,9 +34,11 @@ const LipidPdf = () => {
       })
       .catch((error) => {
         console.error("Error submitting report:", error);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   };
-
 
   const handleDownloadPdf = () => {
     const element = document.getElementById('report-content');

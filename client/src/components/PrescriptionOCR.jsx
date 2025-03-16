@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FaUser, FaChevronDown, FaHome, FaChartBar, FaFileAlt } from 'react-icons/fa';
+import { FaUser, FaChevronDown, FaHome, FaChartBar, FaFileAlt, FaUpload, FaPrescriptionBottleAlt, FaStethoscope, FaPills } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
-import userImage from './../assets/user.png'; // Update this path to your user image
 import { Menu, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import axios from 'axios';
@@ -12,39 +11,11 @@ const PrescriptionOCR = () => {
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [fileName, setFileName] = useState('');
+  const [previewUrl, setPreviewUrl] = useState(null);
   const navigate = useNavigate();
 
-  const a = {
-    "patient_details": {
-      "name": null,
-      "age": null,
-      "sex": null
-    },
-    "medications": [
-      {
-        "medicine": "HISTAC-150",
-        "technical_summary": "Likely Cetirizine 150mg.  Cetirizine is a second-generation H1-antihistamine used to treat allergic rhinitis (hay fever) and urticaria (hives). It blocks the action of histamine, a substance released by the body during an allergic reaction.",
-        "patient_summary": "This medicine helps with allergies like hay fever or hives. It reduces symptoms like sneezing, runny nose, and itching."
-      },
-      {
-        "medicine": "NOGACID-D",
-        "technical_summary": "Likely an antacid containing a combination of drugs.  The '-D' might suggest a drug for dyspepsia.  Without knowing the specific components, a precise summary is impossible.  It likely neutralizes stomach acid.",
-        "patient_summary": "This medicine helps with heartburn, acid reflux, or indigestion. It reduces stomach acid."
-      },
-      {
-        "medicine": "OFLOXACIN-200",
-        "technical_summary": "Ofloxacin 200mg is a fluoroquinolone antibiotic. It works by inhibiting bacterial DNA gyrase and topoisomerase IV, preventing bacterial DNA replication and cell division. Used to treat bacterial infections.",
-        "patient_summary": "This is an antibiotic that fights bacterial infections. It's used to treat infections like bladder infections or pneumonia (depending on the type of infection being treated)."
-      },
-      {
-        "medicine": "DROFEM",
-        "technical_summary": "The exact composition of DROFEM is not clear from the provided information. More details are needed to provide a technical summary.",
-        "patient_summary": "The purpose of this medicine cannot be determined from the provided information.  Please ask your doctor or pharmacist for clarification."
-      }
-    ],
-    "motivational_note_for_patient": "Remember to follow your doctor's instructions carefully and take your medications as prescribed. If you have any questions or concerns, don't hesitate to contact your doctor or pharmacist.",
-    "notes": "The OCR output is poor quality, making accurate identification of patient details and some medication components difficult.  Some interpretations are based on common medication names and abbreviations.  For accurate information, consult the original prescription directly.  The patient should confirm the medication names and doses with their physician or pharmacist."
-  }
+  // Example data for demonstration
   const tmp = {
     "patient_details": {
       "name": "Atul Shah",
@@ -59,12 +30,12 @@ const PrescriptionOCR = () => {
       },
       {
         "medicine": "Metolar 25",
-        "technical_summary": "Metoprolol (Beta-blocker).  Reduces heart rate and blood pressure, used for hypertension and angina.",
+        "technical_summary": "Metoprolol (Beta-blocker). Reduces heart rate and blood pressure, used for hypertension and angina.",
         "patient_summary": "This medicine helps lower your blood pressure and heart rate."
       },
       {
         "medicine": "Telma 40",
-        "technical_summary": "Telmisartan (Angiotensin II receptor blocker - ARB).  Lowers blood pressure.  Often used in hypertension.",
+        "technical_summary": "Telmisartan (Angiotensin II receptor blocker - ARB). Lowers blood pressure. Often used in hypertension.",
         "patient_summary": "This medicine also helps to lower your blood pressure."
       },
       {
@@ -74,8 +45,8 @@ const PrescriptionOCR = () => {
       },
       {
         "medicine": "Oxra-S 10/100",
-        "technical_summary": "Likely a combination of Oxcarbazepine (anticonvulsant) and another drug (the '100' suggests dosage).  Requires more information to definitively state the purpose, but possibly for seizure control or nerve pain.",
-        "patient_summary": "This medicine is likely to help manage seizures or nerve pain.  Please clarify with your doctor if you are unsure."
+        "technical_summary": "Likely a combination of Oxcarbazepine (anticonvulsant) and another drug (the '100' suggests dosage). Requires more information to definitively state the purpose, but possibly for seizure control or nerve pain.",
+        "patient_summary": "This medicine is likely to help manage seizures or nerve pain. Please clarify with your doctor if you are unsure."
       },
       {
         "medicine": "L Dio-1",
@@ -84,12 +55,12 @@ const PrescriptionOCR = () => {
       },
       {
         "medicine": "Atchol 20",
-        "technical_summary": "Insufficient information.  Needs clarification.",
+        "technical_summary": "Insufficient information. Needs clarification.",
         "patient_summary": "Please ask your doctor what this medication is for."
       }
     ],
-    "motivational_note_for_patient": "Remember to take your medications as prescribed by your doctor.  Maintaining a healthy lifestyle with proper diet and exercise will also significantly benefit your health.",
-    "notes": "The prescription is partially illegible and some medication names are unclear.  Some dosages are also missing. The patient's age and sex are missing. It's crucial to clarify the complete prescription details with the prescribing physician to ensure accurate understanding and treatment."
+    "motivational_note_for_patient": "Remember to take your medications as prescribed by your doctor. Maintaining a healthy lifestyle with proper diet and exercise will also significantly benefit your health.",
+    "notes": "The prescription is partially illegible and some medication names are unclear. Some dosages are also missing. The patient's age and sex are missing. It's crucial to clarify the complete prescription details with the prescribing physician to ensure accurate understanding and treatment."
   }
 
   useEffect(() => {
@@ -107,89 +78,126 @@ const PrescriptionOCR = () => {
     navigate('/login');
   };
 
-  const handleImageUpload = async (event) => {
-    // const file = event.target.files?.[0];
-    const file = document.getElementById("img").files?.[0];
-
-    console.log('aa');
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0];
     if (file) {
-      setUploading(true);
-      setError('');
-      setResult(null);
-
-      const formData = new FormData();
-      formData.append('image', file);
-        // setResult(a);
-        // setUploading(false);
-    console.log('aaaaaa');
-
-      try {
-        const response = await axios.post('http://localhost:5000/process_prescription', formData, 
-{
-  withCredentials: false,
-
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-
-        const b = await response.data;
-        console.log("GG: ",b);
-        setResult(b);
-      } catch (err) {
-        // setError(`Failed to process the image. Please try again. error: ${err.message}`);
-        setResult(tmp);
-      } finally {
-        setUploading(false);
-      }
+      setFileName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
+  const handleImageUpload = async () => {
+    const fileInput = document.getElementById("prescription-file");
+    const file = fileInput?.files?.[0];
+
+    if (!file) {
+      setError('Please select an image file first');
+      return;
+    }
+
+    setUploading(true);
+    setError('');
+    setResult(null);
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const response = await axios.post('http://localhost:5000/process_prescription', formData, {
+        withCredentials: false,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const data = await response.data;
+      setResult(data);
+    } catch (err) {
+      console.error("Error processing prescription:", err);
+      // For demo purposes, use example data
+      setResult(tmp);
+      // Comment out the line above and uncomment below for production
+      // setError(`Failed to process the image. Please try again.`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const getMedicationIcon = (index) => {
+    const icons = [<FaPills />, <FaStethoscope />, <FaPrescriptionBottleAlt />];
+    return icons[index % icons.length];
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a1a2e] to-[#16213e] text-white">
+    <div className="min-h-screen bg-gray-100" style={{ fontFamily: 'Satoshi' }}>
       {/* Header */}
-      <header className="bg-[#6C5BD4] p-4 shadow-lg">
-        <div className="container mx-auto flex items-center justify-between">
-        <h1
-            className="text-2xl font-bold cursor-pointer"
-            onClick={() => navigate("/")}
-          >MyLabVerse</h1>
-          <nav className="flex items-center space-x-6 text-sm sm:text-base">
-                <Link to="/userdashboard" className="flex items-center space-x-2 hover:text-yellow-400">
-                              <FaHome /> Dashboard
-                            </Link>
-                            <Link to="/viewreport" className="flex items-center space-x-2 hover:text-yellow-400">
-                              <FaFileAlt /> Reports
-                            </Link>
-                            <Link to="/graph" className="flex items-center space-x-2 hover:text-yellow-400">
-                              <FaChartBar  /> Graph Analysis
-                            </Link>
-                            <Link to="/prescriptionocr" className="flex items-center space-x-2 hover:text-yellow-400">
-                              <FaFileAlt /> OCR
-                            </Link>
-                          </nav>
+      <header className="bg-[#6C5BD4] text-white shadow-lg">
+        <div className="container mx-auto flex justify-between items-center py-4 px-6">
+          {/* Logo and Brand */}
+          <div className="flex items-center space-x-2">
+            <h1 
+              className="text-2xl font-bold cursor-pointer" 
+              onClick={() => navigate("/")}
+            >
+              MyLabVerse
+            </h1>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center space-x-6">
+            <Link
+              to="/userdashboard"
+              className="flex items-center space-x-2 hover:text-yellow-300 font-medium transition duration-200"
+            >
+              <FaHome /> <span>Dashboard</span>
+            </Link>
+            <Link
+              to="/viewreport"
+              className="flex items-center space-x-2 hover:text-yellow-300 font-medium transition duration-200"
+            >
+              <FaFileAlt /> <span>Reports</span>
+            </Link>
+            <Link
+              to="/graph"
+              className="flex items-center space-x-2 hover:text-yellow-300 font-medium transition duration-200"
+            >
+              <FaChartBar /> <span>Analytics</span>
+            </Link>
+            <Link
+              to="/prescriptionocr"
+              className="flex items-center space-x-2 hover:text-yellow-300 font-medium transition duration-200"
+            >
+              <FaFileAlt /> <span>OCR</span>
+            </Link>
+          </nav>
+
+          {/* User Menu */}
           {isLoggedIn && (
             <Menu as="div" className="relative">
-              <Menu.Button className="flex items-center space-x-2 bg-[#6C5BD4] hover:bg-blue-700 text-white px-4 py-2 rounded-md">
-                <FaUser />
-                <span>{userName}</span>
-                <FaChevronDown />
+              <Menu.Button className="flex items-center space-x-2 bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-2 rounded-md transition duration-200">
+                <FaUser className="text-sm" />
+                <span className="text-sm font-medium">{userName}</span>
+                <FaChevronDown className="text-sm" />
               </Menu.Button>
               <Transition
                 as={Fragment}
-                enter="transition ease-out duration-200"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="transition ease-in duration-100"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
+                enter="transition ease-out duration-100"
+                enterFrom="transform opacity-0 scale-95"
+                enterTo="transform opacity-100 scale-100"
+                leave="transition ease-in duration-75"
+                leaveFrom="transform opacity-100 scale-100"
+                leaveTo="transform opacity-0 scale-95"
               >
-                <Menu.Items className="absolute right-0 mt-2 w-48 bg-white text-gray-700 rounded-lg shadow-lg">
+                <Menu.Items className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 py-1">
                   <Menu.Item>
                     {({ active }) => (
                       <Link
                         to="/profile"
-                        className={`${active ? 'bg-gray-100' : ''} block px-4 py-2`}
+                        className={`${active ? 'bg-gray-100' : ''} block px-4 py-2 text-gray-700`}
                       >
                         Profile
                       </Link>
@@ -199,7 +207,7 @@ const PrescriptionOCR = () => {
                     {({ active }) => (
                       <button
                         onClick={handleLogout}
-                        className={`block w-full text-left px-4 py-2 ${active ? 'bg-gray-100' : ''}`}
+                        className={`${active ? 'bg-gray-100' : ''} block px-4 py-2 text-gray-700 w-full text-left`}
                       >
                         Logout
                       </button>
@@ -213,69 +221,168 @@ const PrescriptionOCR = () => {
       </header>
 
       {/* Main Content */}
-      <main className="p-6 container mx-auto">
-        <section className="text-center">
-          <h2 className="text-3xl font-bold mb-6">Upload Your Prescription</h2>
-          <div className="bg-white text-black p-6 rounded-lg shadow-lg w-full max-w-lg mx-auto">
-            <input
-              id="img"
-              type="file"
-              accept="image/*"
-              className="block mb-4"
-              disabled={uploading}
-            />
+      <main className="container mx-auto py-8 px-4">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Prescription Scanner</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Upload your prescription and get detailed information about your medications including their purposes and effects.
+          </p>
+        </div>
+
+        {/* Upload Section */}
+        <div className="bg-white rounded-lg shadow-md p-8 mb-8 max-w-3xl mx-auto">
+          <div className="flex flex-col items-center">
+            <div className="w-full mb-6 text-center">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg px-6 py-10 cursor-pointer hover:border-indigo-500 transition-colors duration-200 relative">
+                <input
+                  id="prescription-file"
+                  type="file"
+                  accept="image/*"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={handleFileChange}
+                  disabled={uploading}
+                />
+                
+                {previewUrl ? (
+                  <div className="relative">
+                    <img 
+                      src={previewUrl} 
+                      alt="Prescription preview" 
+                      className="mx-auto max-h-48 rounded shadow-sm" 
+                    />
+                    <p className="mt-2 text-sm text-gray-500">{fileName}</p>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <FaUpload className="mx-auto h-12 w-12 text-gray-400" />
+                    <p className="mt-2 text-sm text-gray-500">
+                      Click or drag and drop to upload your prescription
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      PNG, JPG, GIF up to 10MB
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+            
             <button
-              className="bg-[#FF6000] text-white px-4 py-2 rounded-lg hover:bg-yellow-400 transition duration-300 w-full"
+              className="bg-[#6C5BD4] hover:bg-[#5544b4] text-white font-medium py-3 px-6 rounded-md shadow-sm transition duration-200 flex items-center"
               disabled={uploading}
               onClick={handleImageUpload}
             >
-              {uploading ? 'Uploading...' : 'Upload and Process'}
+              {uploading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <FaFileAlt className="mr-2" /> Analyze Prescription
+                </>
+              )}
             </button>
           </div>
-        </section>
+        </div>
 
         {/* Error Message */}
         {error && (
-          <div className="mt-6 bg-red-500 text-white p-4 rounded-lg shadow-lg">
-            <p>{error}</p>
+          <div className="max-w-3xl mx-auto mb-8">
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md">
+              <p className="font-medium">Error</p>
+              <p>{error}</p>
+            </div>
           </div>
         )}
 
         {/* Results Section */}
         {result && (
-          <section className="mt-12">
-            <div className="bg-gradient-to-r from-[#16213e] to-[#1a1a2e] p-6 rounded-lg shadow-lg">
-              <h3 className="text-2xl font-bold mb-4">Patient Details</h3>
-              { result.patient_details.name  &&<p className="text-lg">Name: {result.patient_details.name}</p>}
-              {result.patient_details.age  && <p className="text-lg">Age: {result.patient_details.age}</p>}
-              {result.patient_details.sex  && <p className="text-lg">Sex: {result.patient_details.sex}</p>}
+          <div className="max-w-5xl mx-auto">
+            {/* Patient Details */}
+            <div className="bg-white rounded-lg shadow-md p-6 mb-8 border-l-4 border-indigo-500">
+              <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center">
+                <FaUser className="mr-2 text-indigo-600" /> Patient Details
+              </h2>
+              <div className="pl-2 border-l-2 border-gray-200">
+                {result.patient_details.name && (
+                  <p className="text-lg mb-2">
+                    <span className="font-medium text-gray-700">Name:</span> {result.patient_details.name}
+                  </p>
+                )}
+                {result.patient_details.age && (
+                  <p className="text-lg mb-2">
+                    <span className="font-medium text-gray-700">Age:</span> {result.patient_details.age}
+                  </p>
+                )}
+                {result.patient_details.sex && (
+                  <p className="text-lg mb-2">
+                    <span className="font-medium text-gray-700">Sex:</span> {result.patient_details.sex}
+                  </p>
+                )}
+                {!result.patient_details.name && !result.patient_details.age && !result.patient_details.sex && (
+                  <p className="text-gray-500 italic">No patient details found in the prescription</p>
+                )}
+              </div>
             </div>
 
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Medications */}
+            <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center">
+              <FaPills className="mr-2 text-[#FF6000]" /> Prescribed Medications
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               {result.medications.map((med, index) => (
                 <div
                   key={index}
-                  className="bg-white text-black p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
+                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
                 >
-                  <h4 className="text-xl font-bold">{med.medicine}</h4>
-                  <p className="mt-2 text-sm text-gray-600">
-                    {med.technical_summary}
-                  </p>
-                  <p className="mt-2">{med.patient_summary}</p>
+                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 text-white flex items-center justify-between">
+                    <h3 className="text-xl font-bold">{med.medicine}</h3>
+                    <div className="bg-white text-indigo-600 p-2 rounded-full">
+                      {getMedicationIcon(index)}
+                    </div>
+                  </div>
+                  <div className="p-5">
+                    <div className="mb-4">
+                      <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        Technical Information
+                      </h4>
+                      <p className="text-gray-700">
+                        {med.technical_summary}
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        For Patient
+                      </h4>
+                      <p className="text-gray-800 font-medium">
+                        {med.patient_summary}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-8 bg-gradient-to-r from-[#6C5BD4] to-[#8A2BE2] p-6 rounded-lg shadow-lg">
-              <h4 className="text-lg font-bold">Note</h4>
-              <p>{result.motivational_note_for_patient}</p>
+            {/* Notes & Recommendations */}
+            <div className="bg-gradient-to-r from-[#6C5BD4] to-indigo-600 rounded-lg shadow-lg p-6 text-white mb-8">
+              <h3 className="text-xl font-bold mb-4 flex items-center">
+                <FaStethoscope className="mr-2" /> Health Recommendations
+              </h3>
+              <p className="text-lg">{result.motivational_note_for_patient}</p>
             </div>
 
-            {/* <div className="mt-8 bg-gradient-to-r from-[#FF6000] to-[#FF4500] p-6 rounded-lg shadow-lg">
-              <h4 className="text-lg font-bold">Additional Notes</h4>
-              <p>{result.notes}</p>
+            {/* Doctor's Notes - Commented out but kept for future reference */}
+            {/* <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+              <h3 className="text-xl font-bold mb-4 text-gray-800 flex items-center">
+                <FaNotesMedical className="mr-2 text-orange-500" /> Additional Notes
+              </h3>
+              <p className="text-gray-700">{result.notes}</p>
             </div> */}
-          </section>
+          </div>
         )}
       </main>
     </div>

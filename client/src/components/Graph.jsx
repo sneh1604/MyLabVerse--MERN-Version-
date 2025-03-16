@@ -177,318 +177,257 @@ const HemogramChart = () => {
   if (loading) return <div className="p-4 text-center">Loading...</div>;
 
   return (
-    <div
-      className="min-h-screen bg-gray-100 "
-      style={{ fontFamily: "Satoshi" }}
-    >
+    <div className="min-h-screen bg-gray-100" style={{ fontFamily: "Satoshi" }}>
       {/* Header */}
-      <header className="bg-[#6C5BD4] text-white p-4 shadow-lg">
-        <div className="container mx-auto flex justify-between items-center">
-        <h1
-            className="text-2xl font-bold cursor-pointer"
-            onClick={() => navigate("/")}
-          >MyLabVerse</h1>
-          <nav className="flex items-center space-x-6">
-            <Link
-              to="/userdashboard"
-              className="flex items-center space-x-2 hover:text-yellow-400"
-            >
-              <FaHome /> Dashboard
-            </Link>
-            <Link
-              to="/viewreport"
-              className="flex items-center space-x-2 hover:text-yellow-400"
-            >
-              <FaFileAlt /> Reports
-            </Link>
-            <Link
-              to="/graph"
-              className="flex items-center space-x-2 hover:text-yellow-400"
-            >
-              <FaChartBar /> Graph Analysis
-            </Link>
-            <Link
-              to="/prescriptionocr"
-              className="flex items-center space-x-2 hover:text-yellow-400"
-            >
-              <FaFileAlt /> OCR
-            </Link>
-          </nav>
-          <div className="relative">
-            {isLoggedIn && (
-              <Menu as="div" className="relative">
-                <div>
-                  <Menu.Button className="flex items-center space-x-2 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md focus:outline-none">
-                    <FaUser />
-                    <span className="text-lg">{userName}</span>
-                    <FaChevronDown />
-                  </Menu.Button>
+      <header className="bg-[#6C5BD4] text-white shadow-lg">
+              <div className="container mx-auto flex justify-between items-center py-4 px-6">
+                {/* Logo and Brand */}
+                <div className="flex items-center space-x-2">
+                  <h1 className="text-2xl font-bold cursor-pointer" onClick={() => navigate('/')}>MyLabVerse</h1>
                 </div>
+      
+                {/* Navigation Links */}
+                <nav className="hidden md:flex items-center space-x-6">
+                  <Link to="/userdashboard" className="flex items-center space-x-2 hover:text-yellow-300 font-medium transition duration-200">
+                    <FaHome /> <span>Dashboard</span>
+                  </Link>
+                  <Link to="/viewreport" className="flex items-center space-x-2 hover:text-yellow-300 font-medium transition duration-200">
+                    <FaFileAlt /> <span>Reports</span>
+                  </Link>
+                  <Link to="/graph" className="flex items-center space-x-2 hover:text-yellow-300 font-medium transition duration-200">
+                    <FaChartBar /> <span>Analytics</span>
+                  </Link>
+                  <Link to="/prescriptionocr" className="flex items-center space-x-2 hover:text-yellow-300 font-medium transition duration-200">
+                    <FaFileAlt /> <span>OCR</span>
+                  </Link>
+                </nav>
+      
+                {/* User Menu */}
+                {isLoggedIn && (
+                  <Menu as="div" className="relative">
+                    <Menu.Button className="flex items-center space-x-2 bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-2 rounded-md transition duration-200">
+                      <FaUser className="text-sm" />
+                      <span className="text-sm font-medium">{userName}</span>
+                      <FaChevronDown className="text-sm" />
+                    </Menu.Button>
+                    <Transition
+                      as={Fragment}
+                      enter="transition ease-out duration-100"
+                      enterFrom="transform opacity-0 scale-95"
+                      enterTo="transform opacity-100 scale-100"
+                      leave="transition ease-in duration-75"
+                      leaveFrom="transform opacity-100 scale-100"
+                      leaveTo="transform opacity-0 scale-95"
+                    >
+                      <Menu.Items className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 py-1">
+                        <Menu.Item>
+                          {({ active }) => (
+                            <Link
+                              to="/profile"
+                              className={`${active ? 'bg-gray-100' : ''} block px-4 py-2 text-gray-700`}
+                            >
+                              Profile
+                            </Link>
+                          )}
+                        </Menu.Item>
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={handleLogout}
+                              className={`${active ? 'bg-gray-100' : ''} block px-4 py-2 text-gray-700 w-full text-left`}
+                            >
+                              Logout
+                            </button>
+                          )}
+                        </Menu.Item>
+                      </Menu.Items>
+                    </Transition>
+                  </Menu>
+                )}
+              </div>
+            </header>
 
-                <Transition
-                  as={Fragment}
-                  enter="transition ease-out duration-200"
-                  enterFrom="opacity-0 scale-95"
-                  enterTo="opacity-100 scale-100"
-                  leave="transition ease-in duration-100"
-                  leaveFrom="opacity-100 scale-100"
-                  leaveTo="opacity-0 scale-95"
-                >
-                  <Menu.Items className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 focus:outline-none">
-                    <Menu.Item>
-                      {({ active }) => (
-                        <Link
-                          to="/profile"
-                          className={`${
-                            active ? "bg-gray-100" : ""
-                          } block px-4 py-2 text-gray-700 hover:bg-gray-200`}
-                        >
-                          Profile
-                        </Link>
-                      )}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button
-                          onClick={handleLogout}
-                          className={`${
-                            active ? "bg-gray-100" : ""
-                          } block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-200`}
-                        >
-                          Logout
-                        </button>
-                      )}
-                    </Menu.Item>
-                  </Menu.Items>
-                </Transition>
-              </Menu>
+      <h2 className="text-4xl font-bold text-center mb-12 mt-8 text-[#6C5BD4]">
+        Graph Analysis of Your Report
+      </h2>
+
+      {/* Chart Section */}
+      <div className="space-y-12 max-w-6xl mx-auto">
+        {/* Hemoglobin Chart */}
+        <div className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-[#FF6000]">
+          <h3 className="text-xl font-semibold mb-4 text-gray-800">Hemoglobin</h3>
+          <Line
+            data={prepareLineChartData(
+              "Hemoglobin",
+              graphData.map((report) => report.hemoglobin),
+              normalRanges.hemoglobin?.min,
+              normalRanges.hemoglobin?.max
+            )}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: { position: "top" },
+                title: {
+                  display: true,
+                  text: "Hemoglobin Levels Over Time",
+                  color: "#333",
+                },
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: { display: true, text: "Values", color: "#333" },
+                  grid: { color: "#E5E7EB", borderColor: "#E5E7EB" },
+                  ticks: { color: "#6B7280" },
+                },
+                x: {
+                  title: { display: true, text: "Test Dates", color: "#333" },
+                  grid: { color: "#E5E7EB", borderColor: "#E5E7EB" },
+                  ticks: { color: "#6B7280" },
+                },
+              },
+            }}
+          />
+          <div className="mt-4 p-4 bg-[#6C5BD4] text-white rounded-lg">
+            {generatePrecautionText(
+              graphData[graphData.length - 1]?.hemoglobin || 0,
+              normalRanges.hemoglobin?.min,
+              normalRanges.hemoglobin?.max,
+              "Hemoglobin"
             )}
           </div>
         </div>
-      </header>
 
-      <h2 className="text-4xl font-bold text-center mb-12 mt-8 text-[#6C5BD4]">
-        Graph Analysis of your report{" "}
-      </h2>
-
-      {/* Hemoglobin Chart */}
-      <div className="mb-8 bg-black p-6 rounded-lg shadow-2xl r border-[#FF6000] border-4 max-w-4xl mx-auto">
-        <h3 className="text-xl font-semibold mb-4 text-white">Hemoglobin</h3>
-        <Line
-          data={prepareLineChartData(
-            "Hemoglobin",
-            graphData.map((report) => report.hemoglobin),
-            normalRanges.hemoglobin?.min,
-            normalRanges.hemoglobin?.max
-          )}
-          options={{
-            responsive: true,
-            plugins: {
-              legend: { position: "top" },
-              title: {
-                display: true,
-                text: "Hemoglobin Levels Over Time",
-                color: "white",
-              },
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: { display: true, text: "Values", color: "white" },
-                grid: {
-                  color: "#2B2B2B", // Change this to your desired color for y-axis grid lines
-                  borderColor: "#2B2B2B", // Change this to your desired border color
-                },
-                ticks: {
-                  color: "#DDE6ED", // Change Y-axis labels to white
+        {/* RBC Count Chart */}
+        <div className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-[#FF6000]">
+          <h3 className="text-xl font-semibold mb-4 text-gray-800">RBC Count</h3>
+          <Line
+            data={prepareLineChartData(
+              "RBC Count",
+              graphData.map((report) => report.rbc_count),
+              normalRanges.rbc_count?.min,
+              normalRanges.rbc_count?.max
+            )}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: { position: "top" },
+                title: {
+                  display: true,
+                  text: "RBC Count Over Time",
+                  color: "#333",
                 },
               },
-              x: {
-                title: { display: true, text: "Test Dates", color: "white" },
-                grid: {
-                  color: "#2B2B2B", // Change this to your desired color for y-axis grid lines
-                  borderColor: "#2B2B2B", // Change this to your desired border color
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: { display: true, text: "Values", color: "#333" },
+                  grid: { color: "#E5E7EB", borderColor: "#E5E7EB" },
+                  ticks: { color: "#6B7280" },
                 },
-                ticks: {
-                  color: "#DDE6ED", // Change Y-axis labels to white
+                x: {
+                  title: { display: true, text: "Test Dates", color: "#333" },
+                  grid: { color: "#E5E7EB", borderColor: "#E5E7EB" },
+                  ticks: { color: "#6B7280" },
                 },
               },
-            },
-          }}
-        />
-        <div className="mt-4 p-4 bg-[#6C5BD4] text-white rounded-lg">
-          {generatePrecautionText(
-            graphData[graphData.length - 1]?.hemoglobin || 0,
-            normalRanges.hemoglobin?.min,
-            normalRanges.hemoglobin?.max,
-            "Hemoglobin"
-          )}
+            }}
+          />
+          <div className="mt-4 p-4 bg-[#6C5BD4] text-white rounded-lg">
+            {generatePrecautionText(
+              graphData[graphData.length - 1]?.rbc_count || 0,
+              normalRanges.rbc_count?.min,
+              normalRanges.rbc_count?.max,
+              "RBC Count"
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* RBC Count Chart */}
-      <div className="mb-8 bg-black p-6 rounded-lg shadow-2xl r border-[#FF6000] border-4 max-w-4xl mx-auto">
-        <h3 className="text-xl font-semibold mb-4 text-white">RBC Count</h3>
-        <Line
-          data={prepareLineChartData(
-            "RBC Count",
-            graphData.map((report) => report.rbc_count),
-            normalRanges.rbc_count?.min,
-            normalRanges.rbc_count?.max
-          )}
-          options={{
-            responsive: true,
-            plugins: {
-              legend: { position: "top" },
-              title: {
-                display: true,
-                text: "RBC Count Over Time",
-                color: "white",
-              },
-              tooltip: {
-                bodyColor: "white", // Change tooltip text color to white
-                titleColor: "white", // Change tooltip title color to white
-              },
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: { display: true, text: "Values", color: "white" },
-                grid: {
-                  color: "#2B2B2B", // Change this to your desired color for y-axis grid lines
-                  borderColor: "#2B2B2B", // Change this to your desired border color
-                },
-                ticks: {
-                  color: "#DDE6ED", // Change Y-axis labels to white
+        {/* WBC Count Chart */}
+        <div className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-[#FF6000]">
+          <h3 className="text-xl font-semibold mb-4 text-gray-800">WBC Count</h3>
+          <Line
+            data={prepareLineChartData(
+              "WBC Count",
+              graphData.map((report) => report.wbc_count),
+              normalRanges.wbc_count?.min,
+              normalRanges.wbc_count?.max
+            )}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: { position: "top" },
+                title: {
+                  display: true,
+                  text: "WBC Count Over Time",
+                  color: "#333",
                 },
               },
-              x: {
-                title: { display: true, text: "Test Dates", color: "white" },
-                grid: {
-                  color: "#2B2B2B", // Change this to your desired color for y-axis grid lines
-                  borderColor: "#2B2B2B", // Change this to your desired border color
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: { display: true, text: "Values", color: "#333" },
+                  grid: { color: "#E5E7EB", borderColor: "#E5E7EB" },
+                  ticks: { color: "#6B7280" },
                 },
-                ticks: {
-                  color: "#DDE6ED", // Change Y-axis labels to white
+                x: {
+                  title: { display: true, text: "Test Dates", color: "#333" },
+                  grid: { color: "#E5E7EB", borderColor: "#E5E7EB" },
+                  ticks: { color: "#6B7280" },
                 },
               },
-            },
-          }}
-        />
-        <div className="mt-4 p-4 bg-[#6C5BD4] text-white rounded-lg">
-          {generatePrecautionText(
-            graphData[graphData.length - 1]?.rbc_count || 0,
-            normalRanges.rbc_count?.min,
-            normalRanges.rbc_count?.max,
-            "RBC Count"
-          )}
+            }}
+          />
+          <div className="mt-4 p-4 bg-[#6C5BD4] text-white rounded-lg">
+            {generatePrecautionText(
+              graphData[graphData.length - 1]?.wbc_count || 0,
+              normalRanges.wbc_count?.min,
+              normalRanges.wbc_count?.max,
+              "WBC Count"
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* WBC Count Chart */}
-      <div className="mb-8 bg-black p-6 rounded-lg shadow-2xl r border-[#FF6000] border-4 max-w-4xl mx-auto">
-        <h3 className="text-xl font-semibold mb-4 text-white">WBC Count</h3>
-        <Line
-          data={prepareLineChartData(
-            "WBC Count",
-            graphData.map((report) => report.wbc_count),
-            normalRanges.wbc_count?.min,
-            normalRanges.wbc_count?.max
-          )}
-          options={{
-            responsive: true,
-            plugins: {
-              legend: { position: "top" },
-              title: {
-                display: true,
-                text: "WBC Count Over Time",
-                color: "white",
-              },
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: { display: true, text: "Values", color: "white" },
-                grid: {
-                  color: "#2B2B2B", // Change this to your desired color for y-axis grid lines
-                  borderColor: "#2B2B2B", // Change this to your desired border color
-                },
-                ticks: {
-                  color: "#DDE6ED", // Change Y-axis labels to white
+        {/* Blood Sugar Chart */}
+        <div className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-[#FF6000]">
+          <h3 className="text-xl font-semibold mb-4 text-gray-800 ">
+            Total Cholesterol
+          </h3>
+          <Bar
+            data={prepareBarChartData()}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: { position: "top" },
+                title: {
+                  display: true,
+                  text: "Total Cholesterol Over Time",
+                  color: "#333",
                 },
               },
-              x: {
-                title: { display: true, text: "Test Dates", color: "white" },
-                grid: {
-                  color: "#2B2B2B", // Change this to your desired color for y-axis grid lines
-                  borderColor: "#2B2B2B", // Change this to your desired border color
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: { display: true, text: "Values", color: "#333" },
+                  grid: { color: "#E5E7EB", borderColor: "#E5E7EB" },
+                  ticks: { color: "#6B7280" },
                 },
-                ticks: {
-                  color: "#DDE6ED", // Change Y-axis labels to white
-                },
-              },
-            },
-          }}
-        />
-        <div className="mt-4 p-4 bg-[#6C5BD4] text-white rounded-lg">
-          {generatePrecautionText(
-            graphData[graphData.length - 1]?.wbc_count || 0,
-            normalRanges.wbc_count?.min,
-            normalRanges.wbc_count?.max,
-            "WBC Count"
-          )}
-        </div>
-      </div>
-
-      {/* Blood Sugar Chart */}
-      <div className="mb-8 bg-black p-6 rounded-lg shadow-2xl r border-[#FF6000] border-4 max-w-4xl mx-auto">
-        <h3 className="text-xl font-semibold mb-4 text-white ">
-          Total Cholesterol
-        </h3>
-        <Bar
-          data={prepareBarChartData()}
-          options={{
-            responsive: true,
-            plugins: {
-              legend: { position: "top" },
-              title: {
-                display: true,
-                text: "Total Cholesterol Over Time",
-                color: "white",
-              },
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: { display: true, text: "Values", color: "white" },
-                grid: {
-                  color: "#2B2B2B", // Change this to your desired color for y-axis grid lines
-                  borderColor: "#2B2B2B", // Change this to your desired border color
-                },
-                ticks: {
-                  color: "#DDE6ED", // Change Y-axis labels to white
+                x: {
+                  title: { display: true, text: "Test Dates", color: "#333" },
+                  grid: { color: "#E5E7EB", borderColor: "#E5E7EB" },
+                  ticks: { color: "#6B7280" },
                 },
               },
-              x: {
-                title: { display: true, text: "Test Dates", color: "white" },
-                grid: {
-                  color: "#2B2B2B", // Change this to your desired color for y-axis grid lines
-                  borderColor: "#2B2B2B", // Change this to your desired border color
-                },
-                ticks: {
-                  color: "#DDE6ED", // Change Y-axis labels to white
-                },
-              },
-            },
-          }}
-        />
-        <div className="mt-4 p-4 bg-[#6C5BD4] text-white  rounded-lg">
-          {generatePrecautionText(
-            bloodSugarData[bloodSugarData.length - 1]?.totalCholesterol || 0,
-            normalCholesterolRanges.min,
-            normalCholesterolRanges.max,
-            "Total Cholesterol"
-          )}
+            }}
+          />
+          <div className="mt-4 p-4 bg-[#6C5BD4] text-white  rounded-lg">
+            {generatePrecautionText(
+              bloodSugarData[bloodSugarData.length - 1]?.totalCholesterol || 0,
+              normalCholesterolRanges.min,
+              normalCholesterolRanges.max,
+              "Total Cholesterol"
+            )}
+          </div>
         </div>
       </div>
     </div>
