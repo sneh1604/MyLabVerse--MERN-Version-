@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaBars, FaUserCircle, FaFileAlt, FaFlask, FaTachometerAlt, FaUsers } from "react-icons/fa";
+import { FaBars, FaUserCircle, FaFileAlt, FaFlask, FaTachometerAlt, FaUsers, FaInfoCircle, FaCheck } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function HemogramReport() {
     const [clients, setClients] = useState([]);
@@ -32,6 +32,28 @@ function HemogramReport() {
         platelet_option: ''
     });
     const [showSuccess, setShowSuccess] = useState(false);
+    const [currentStep, setCurrentStep] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState({});
+    const [tooltipVisible, setTooltipVisible] = useState(null);
+    const [showError, setShowError] = useState(false);  // Add this line
+
+    const normalRanges = {
+        hemoglobin: "13.5-17.5 g/dL",
+        rbc_count: "4.7-6.1 million/µL",
+        wbc_count: "4,500-11,000/µL",
+        platelet_count: "150,000-450,000/µL",
+        polymorphs: "40-75%",
+        lymphocytes: "20-45%",
+        eosinophils: "1-6%",
+        monocytes: "2-10%",
+        basophils: "0-1%",
+        pcv: "41-50%",
+        mcv: "80-96 fL",
+        mch: "27.5-33.2 pg",
+        mchc: "33.4-35.5 g/dL",
+        rdw: "11.6-14.6%"
+    };
 
     // Fetch the list of registered users (excluding admins)
     useEffect(() => {
@@ -75,15 +97,37 @@ function HemogramReport() {
         }
     };
     
+    const validateForm = () => {
+        const newErrors = {};
+        Object.keys(formData).forEach(key => {
+            if (key !== 'clientName' && !formData[key]) {
+                newErrors[key] = 'This field is required';
+            }
+        });
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setModalOpen(true); // Show confirmation modal
+        const isValid = validateForm();
+        if (!isValid) {
+            setShowError(true);
+            setTimeout(() => setShowError(false), 3000);
+            return;
+        }
+        setModalOpen(true);
     };
 
-    const confirmSubmit = () => {
-        axios.post('http://localhost:4000/hemogram-report', formData, { withCredentials: true })
-            .then(() => {
+    const confirmSubmit = async () => {
+        setLoading(true);
+        try {
+            await axios.post('http://localhost:4000/hemogram-report', formData, { withCredentials: true });
+            setModalOpen(false);
+            setShowSuccess(true);
+            setTimeout(() => {
+                setShowSuccess(false);
                 setFormData({
                     clientName: '',
                     clientId: '',
@@ -105,17 +149,14 @@ function HemogramReport() {
                     wbcs: '',
                     platelet_option: ''
                 });
-                setModalOpen(false);
-                setShowSuccess(true); // Show success message
-                setTimeout(() => {
-                    setShowSuccess(false);
-                }, 3000); // Hide success message after 3 seconds
-            })
-            .catch(error => {
-                console.error('Error submitting report:', error);
-                setModalOpen(false);
-            });
+            }, 3000);
+        } catch (error) {
+            console.error('Error submitting report:', error);
+        } finally {
+            setLoading(false);
+        }
     };
+
     const f = document.getElementsByTagName('input');
     for (let i = 0; i < f.length; i++) {
       f[i].addEventListener("wheel", (event) => {
@@ -124,8 +165,54 @@ function HemogramReport() {
       });
     }
 
+    const formSections = [
+        {
+            title: "Patient Information",
+            fields: [
+                { name: "clientName", label: "Patient Name", type: "select", options: clients },
+            ]
+        },
+        {
+            title: "Primary Blood Counts",
+            fields: [
+                { name: "hemoglobin", label: "Hemoglobin", type: "number", unit: "g/dL", range: "13.5-17.5" },
+                { name: "rbc_count", label: "RBC Count", type: "number", unit: "million/µL", range: "4.7-6.1" },
+                { name: "wbc_count", label: "WBC Count", type: "number", unit: "/µL", range: "4,500-11,000" },
+                { name: "platelet_count", label: "Platelet Count", type: "number", unit: "/µL", range: "150,000-450,000" }
+            ]
+        },
+        {
+            title: "Differential Count",
+            fields: [
+                { name: "polymorphs", label: "Polymorphs", type: "number", unit: "%", range: "40-75" },
+                { name: "lymphocytes", label: "Lymphocytes", type: "number", unit: "%", range: "20-45" },
+                { name: "eosinophils", label: "Eosinophils", type: "number", unit: "%", range: "1-6" },
+                { name: "monocytes", label: "Monocytes", type: "number", unit: "%", range: "2-10" },
+                { name: "basophils", label: "Basophils", type: "number", unit: "%", range: "0-1" }
+            ]
+        },
+        {
+            title: "Additional Parameters",
+            fields: [
+                { name: "pcv", label: "PCV", type: "number", unit: "%", range: "41-50" },
+                { name: "mcv", label: "MCV", type: "number", unit: "fL", range: "80-96" },
+                { name: "mch", label: "MCH", type: "number", unit: "pg", range: "27.5-33.2" },
+                { name: "mchc", label: "MCHC", type: "number", unit: "g/dL", range: "33.4-35.5" },
+                { name: "rdw", label: "RDW", type: "number", unit: "%", range: "11.6-14.6" }
+            ]
+        },
+        {
+            title: "Morphology",
+            fields: [
+                { name: "rbcs", label: "RBCs", type: "select", options: ["", "normal", "low", "high"] },
+                { name: "wbcs", label: "WBCs", type: "select", options: ["", "normal", "low", "high"] },
+                { name: "platelet_option", label: "Platelets", type: "select", options: ["", "normal", "low", "high"] }
+            ]
+        }
+    ];
+
     return (
-        <div className="flex min-h-screen bg-gray-100">
+        <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             {/* Sidebar */}
             <aside
                 className={`bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -193,275 +280,191 @@ function HemogramReport() {
                         )}
                     </div>
                 </header>
-                <main className="flex-grow p-6 bg-gray-100">
-                    {showSuccess && (
-                        <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg">
-                            Report submitted successfully!
-                        </div>
-                    )}
-                    <h2 className="text-3xl font-semibold text-center mb-6">Submit Haemogram Report Details</h2>
-                    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-lg">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Patient Name:
-                                </label>
-                                <select
-                                    name="clientName"
-                                    value={formData.clientName}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                >
-                                    <option value="">Select</option>
-                                    {clients.map(client => (
-                                        <option key={client._id} value={client.name}>{client.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Hemoglobin:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="hemoglobin"
-                                    value={formData.hemoglobin}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    RBC Count:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="rbc_count"
-                                    value={formData.rbc_count}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    WBC Count:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="wbc_count"
-                                    value={formData.wbc_count}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Platelet Count:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="platelet_count"
-                                    value={formData.platelet_count}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Polymorphs:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="polymorphs"
-                                    value={formData.polymorphs}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Lymphocytes:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="lymphocytes"
-                                    value={formData.lymphocytes}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Eosinophils:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="eosinophils"
-                                    value={formData.eosinophils}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Monocytes:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="monocytes"
-                                    value={formData.monocytes}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Basophils:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="basophils"
-                                    value={formData.basophils}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    PCV:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="pcv"
-                                    value={formData.pcv}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    MCV:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="mcv"
-                                    value={formData.mcv}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    MCH:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="mch"
-                                    value={formData.mch}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    MCHC:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="mchc"
-                                    value={formData.mchc}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    RDW:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="rdw"
-                                    value={formData.rdw}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    RBCs:
-                                </label>
-                                <select
-                                    name="rbcs"
-                                    value={formData.rbcs}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                >
-                                    <option value="">Select Option</option>
-                                    <option value="normal">Normal</option>
-                                    <option value="low">Low</option>
-                                    <option value="high">High</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    WBCs:
-                                </label>
-                                <select
-                                    name="wbcs"
-                                    value={formData.wbcs}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                >
-                                    <option value="">Select Option</option>
-                                    <option value="normal">Normal</option>
-                                    <option value="low">Low</option>
-                                    <option value="high">High</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Platelet Option:
-                                </label>
-                                <select
-                                    name="platelet_option"
-                                    value={formData.platelet_option}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                >
-                                    <option value="">Select Option</option>
-                                    <option value="normal">Normal</option>
-                                    <option value="low">Low</option>
-                                    <option value="high">High</option>
-                                </select>
-                            </div>
-                        </div>
-                            <button
-                                type="submit"
-                                className="bg-blue-600 text-white py-2 px-4 rounded-md shadow-sm hover:bg-blue-700"
+                <main className="flex-grow p-6 bg-transparent">
+                    <AnimatePresence>
+                        {showSuccess && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -50 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -50 }}
+                                className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg flex items-center"
                             >
-                                Submit
-                            </button>
-                    </form>
-                    {modalOpen && (
-                        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                            <div className="bg-white p-6 rounded-md shadow-lg">
-                                <h3 className="text-lg font-semibold">Confirm Submission</h3>
-                                <p className="mt-2">Are you sure you want to submit this report?</p>
-                                <div className="mt-4 flex justify-end space-x-2">
+                                <FaCheck className="mr-2" />
+                                Report submitted successfully!
+                            </motion.div>
+                        )}
+                        {showError && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -50 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -50 }}
+                                className="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-md shadow-lg flex items-center z-50"
+                            >
+                                <FaInfoCircle className="mr-2" />
+                                Please fill all required fields correctly
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <div className="max-w-4xl mx-auto">
+                        <h2 className="text-3xl font-semibold text-center mb-6">Haemogram Report</h2>
+                        
+                        {/* Progress Steps */}
+                        <div className="flex justify-between mb-8">
+                            {[1, 2, 3].map((step) => (
+                                <div key={step} 
+                                     className="flex flex-col items-center relative">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                        currentStep >= step ? 'bg-purple-600 text-white' : 'bg-gray-200'
+                                    }`}>
+                                        {step}
+                                    </div>
+                                    <span className="text-sm mt-2">
+                                        {step === 1 ? 'Patient Info' : step === 2 ? 'Blood Counts' : 'Additional Tests'}
+                                    </span>
+                                    {step < 3 && (
+                                        <div className={`absolute top-5 left-full w-full h-0.5 -z-10 ${
+                                            currentStep > step ? 'bg-purple-600' : 'bg-gray-200'
+                                        }`} />
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-8">
+                            {formSections.slice((currentStep - 1) * 2, currentStep * 2).map((section, idx) => (
+                                <motion.div
+                                    key={section.title}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: idx * 0.2 }}
+                                    className="bg-white p-6 rounded-lg shadow-lg"
+                                >
+                                    <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                                        {section.title}
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {section.fields.map((field) => (
+                                            <div key={field.name} className="relative group">
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    {field.label}
+                                                    {field.range && (
+                                                        <span className="ml-2 text-xs text-gray-500">
+                                                            ({field.range} {field.unit})
+                                                        </span>
+                                                    )}
+                                                </label>
+                                                {field.type === 'select' ? (
+                                                    <select
+                                                        name={field.name}
+                                                        value={formData[field.name]}
+                                                        onChange={handleChange}
+                                                        className={`w-full p-2 border rounded-lg ${
+                                                            errors[field.name] ? 'border-red-500' : 'border-gray-300'
+                                                        } focus:ring-2 focus:ring-purple-400 focus:border-transparent`}
+                                                    >
+                                                        {field.name === 'clientName' ? (
+                                                            <>
+                                                                <option value="">Select Patient</option>
+                                                                {clients.map(client => (
+                                                                    <option key={client._id} value={client.name}>
+                                                                        {client.name}
+                                                                    </option>
+                                                                ))}
+                                                            </>
+                                                        ) : (
+                                                            field.options.map(option => (
+                                                                <option key={option} value={option}>
+                                                                    {option.charAt(0).toUpperCase() + option.slice(1)}
+                                                                </option>
+                                                            ))
+                                                        )}
+                                                    </select>
+                                                ) : (
+                                                    <div className="relative">
+                                                        <input
+                                                            type={field.type}
+                                                            name={field.name}
+                                                            value={formData[field.name]}
+                                                            onChange={handleChange}
+                                                            className={`w-full p-2 border rounded-lg ${
+                                                                errors[field.name] ? 'border-red-500' : 'border-gray-300'
+                                                            } focus:ring-2 focus:ring-purple-400 focus:border-transparent`}
+                                                        />
+                                                        {field.unit && (
+                                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                                                                {field.unit}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                {errors[field.name] && (
+                                                    <p className="text-red-500 text-sm mt-1">{errors[field.name]}</p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            ))}
+
+                            <div className="flex justify-between mt-6">
+                                {currentStep > 1 && (
                                     <button
-                                        className="bg-gray-200 py-2 px-4 rounded-md hover:bg-gray-300"
+                                        type="button"
+                                        onClick={() => setCurrentStep(current => current - 1)}
+                                        className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                                    >
+                                        Previous
+                                    </button>
+                                )}
+                                {currentStep < 3 ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => setCurrentStep(current => current + 1)}
+                                        className="ml-auto px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                    >
+                                        Next
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="ml-auto px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                    >
+                                        {loading ? 'Submitting...' : 'Submit Report'}
+                                    </button>
+                                )}
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* Confirmation Modal */}
+                    {modalOpen && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4"
+                            >
+                                <h3 className="text-lg font-semibold mb-4">Confirm Submission</h3>
+                                <p className="text-gray-600 mb-6">
+                                    Are you sure you want to submit this report?
+                                </p>
+                                <div className="flex justify-end gap-4">
+                                    <button
+                                        className="px-4 py-2 text-gray-600 hover:text-gray-800"
                                         onClick={() => setModalOpen(false)}
                                     >
                                         Cancel
                                     </button>
                                     <button
-                                        className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+                                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                                         onClick={confirmSubmit}
                                     >
                                         Confirm
                                     </button>
                                 </div>
-                            </div>
+                            </motion.div>
                         </div>
                     )}
                 </main>

@@ -28,7 +28,7 @@ const ProfileModel = require('./models/Profile');
 app.use(express.json());
 app.use(cors({
     origin: ['http://localhost:5173'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Add PATCH to allowed methods
     credentials: true
 }));
 app.use(cookieParser());
@@ -342,6 +342,27 @@ app.put('/test-list/:id', verifyUser, (req, res) => {
     TestListModel.findByIdAndUpdate(id, { name, description, cost, status, delete_flag, date_updated: Date.now() }, { new: true })
         .then(test => res.json(test))
         .catch(err => res.status(400).json(err));
+});
+
+app.patch('/test-list/:id', verifyUser, (req, res) => {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    TestListModel.findByIdAndUpdate(
+        id, 
+        { ...updateData, date_updated: Date.now() },
+        { new: true }
+    )
+    .then(test => {
+        if (!test) {
+            return res.status(404).json({ error: 'Test not found' });
+        }
+        res.json(test);
+    })
+    .catch(err => {
+        console.error('Error updating test:', err);
+        res.status(400).json({ error: 'Failed to update test', details: err.message });
+    });
 });
 
 app.delete('/test-list/:id', verifyUser, (req, res) => {

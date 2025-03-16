@@ -1,35 +1,63 @@
-import React from "react";
-import { FaBars, FaUserCircle, FaFileAlt, FaFlask, FaMicroscope, FaHeartbeat, FaXRay, FaClipboard, FaTint, FaVial, FaDna, FaTooth, FaProcedures, FaSun,FaTachometerAlt ,FaUsers} from "react-icons/fa";
+import React, { useState } from "react";
+import { FaBars, FaUserCircle, FaFileAlt, FaFlask, FaMicroscope, FaHeartbeat, FaXRay, FaClipboard, FaTint, FaVial, FaDna, FaTooth, FaProcedures, FaSun, FaTachometerAlt, FaUsers, FaSearch, FaClock, FaInfoCircle, FaArrowRight } from "react-icons/fa";
 import { GiLiver, GiKidneys } from "react-icons/gi";
 import { BsDropletHalf } from "react-icons/bs";
 import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 export default function MakeReport() {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const navigate = useNavigate();
 
-  const tests = [
-    // { name: "CT Scan", icon: <FaProcedures className="text-blue-600 text-4xl" />, route: "/ct-scan" },
-    // { name: "Electrocardiogram (ECG)", icon: <FaHeartbeat className="text-red-600 text-4xl" />, route: "/ecg" },
-    // { name: "Magnetic Resonance Imaging (MRI) Scan", icon: <FaFileAlt className="text-green-600 text-4xl" />, route: "/mri-scan" },
-    // { name: "X-Rays", icon: <FaXRay className="text-gray-600 text-4xl" />, route: "/x-rays" },
-    // { name: "Ultrasound", icon: <FaTint className="text-pink-600 text-4xl" />, route: "/ultrasound" }, // Changed the icon here
-    // { name: "Full Body Checkup", icon: <FaClipboard className="text-purple-600 text-4xl" />, route: "/full-body-checkup" },
-    { name: "Haemogram Report", icon: <FaFlask className="text-yellow-600 text-4xl" />, route: "/hemogram-report" },
-    { name: "Lipid Profile", icon: <FaVial className="text-orange-600 text-4xl" />, route: "/lipid-profile" },
-    { name: "Blood Sugar Test", icon: <BsDropletHalf className="text-blue-600 text-4xl" />, route: "/blood-sugar-report" },
-    // { name: "Thyroid Function Test", icon: <FaDna className="text-teal-600 text-4xl" />, route: "/thyroid-function-test" },
-    // { name: "Vitamin D Test", icon: <FaSun className="text-yellow-500 text-4xl" />, route: "/vitamin-d-test" },
-    // { name: "Kidney Function Test", icon: <GiKidneys className="text-blue-800 text-4xl" />, route: "/kidney-function-test" },
-    // { name: "Liver Function Test", icon: <GiLiver className="text-red-700 text-4xl" />, route: "/liver-function-test" },
-    // { name: "Urine Analysis", icon: <FaMicroscope className="text-green-600 text-4xl" />, route: "/urine-analysis" },
-    // { name: "Pap Smear", icon: <FaTooth className="text-pink-400 text-4xl" />, route: "/pap-smear" },
+  const categories = [
+    { id: "all", name: "All Tests" },
+    { id: "blood", name: "Blood Tests", icon: <FaTint /> },
+    { id: "diagnostic", name: "Diagnostic", icon: <FaMicroscope /> },
   ];
 
+  const tests = [
+    {
+      name: "Haemogram Report",
+      icon: <FaFlask className="text-yellow-600 text-4xl" />,
+      route: "/hemogram-report",
+      category: "blood",
+      description: "Complete blood count analysis",
+      duration: "30-45 mins",
+      preparation: "8-12 hours fasting required",
+      price: "₹500"
+    },
+    {
+      name: "Lipid Profile",
+      icon: <FaVial className="text-orange-600 text-4xl" />,
+      route: "/lipid-profile",
+      category: "blood",
+      description: "Cholesterol and triglycerides test",
+      duration: "45-60 mins",
+      preparation: "12 hours fasting required",
+      price: "₹800"
+    },
+    {
+      name: "Blood Sugar Test",
+      icon: <BsDropletHalf className="text-blue-600 text-4xl" />,
+      route: "/blood-sugar-report",
+      category: "blood",
+      description: "Glucose level measurement",
+      duration: "15-20 mins",
+      preparation: "Fasting/PP as advised",
+      price: "₹300"
+    }
+  ];
+
+  const filteredTests = tests.filter(test => 
+    (selectedCategory === "all" || test.category === selectedCategory) &&
+    test.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="flex min-h-screen bg-gray-100" style={{ fontFamily: 'Satoshi' }}>
-      {/* Sidebar */}
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <aside
         className={`bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
           } transition duration-200 ease-in-out lg:relative lg:translate-x-0`}
@@ -42,7 +70,7 @@ export default function MakeReport() {
           />
         </div>
         <nav>
-        <ul>
+          <ul>
             <li className="py-2 px-4 flex items-center hover:bg-gray-700 cursor-pointer" onClick={() => navigate("/dashboard")}>
               <FaTachometerAlt className="mr-3" /> Dashboard
             </li>
@@ -62,8 +90,7 @@ export default function MakeReport() {
         </nav>
       </aside>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col" style={{ fontFamily: 'Satoshi' }}>
+      <div className="flex-1 flex flex-col">
         <header className="flex items-center justify-between p-4 bg-[#6C5BD4] text-white">
           <FaBars
             className="lg:hidden cursor-pointer text-2xl"
@@ -96,18 +123,83 @@ export default function MakeReport() {
             )}
           </div>
         </header>
-        <main className="flex-grow p-4 bg-gray-100">
-          <h2 className="text-2xl font-semibold mb-4">Available Tests</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tests.map((test, index) => (
-              <div
-                key={index}
-                onClick={() => navigate(test.route)}
-                className="bg-white shadow-md rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 transition duration-200 ease-in-out"
-              >
-                {test.icon}
-                <h3 className="text-lg font-semibold mt-4">{test.name}</h3>
+        <main className="flex-grow p-6">
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">Medical Tests</h2>
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+              <div className="relative flex-1 max-w-xl">
+                <input
+                  type="text"
+                  placeholder="Search tests..."
+                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               </div>
+              <div className="flex gap-2">
+                {categories.map(category => (
+                  <button
+                    key={category.id}
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+                      selectedCategory === category.id
+                        ? "bg-purple-600 text-white"
+                        : "bg-white text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    {category.icon}
+                    {category.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredTests.map((test, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                whileHover={{ scale: 1.02 }}
+                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+              >
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-gray-100 rounded-lg">
+                        {test.icon}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800">{test.name}</h3>
+                        <p className="text-gray-600 text-sm">{test.description}</p>
+                      </div>
+                    </div>
+                    <span className="text-purple-600 font-semibold">{test.price}</span>
+                  </div>
+                  
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center text-sm text-gray-600">
+                      <FaClock className="mr-2" />
+                      Duration: {test.duration}
+                    </div>
+                    <div className="flex items-center text-sm text-gray-600">
+                      <FaInfoCircle className="mr-2" />
+                      {test.preparation}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => navigate(test.route)}
+                    className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+                  >
+                    Create Report
+                    <FaArrowRight />
+                  </button>
+                </div>
+              </motion.div>
             ))}
           </div>
         </main>

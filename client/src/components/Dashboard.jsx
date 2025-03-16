@@ -1,6 +1,6 @@
-import axios from "axios";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   FaBars,
   FaTachometerAlt,
@@ -15,38 +15,64 @@ import {
   FaCogs,
   FaEnvelopeOpenText,
   FaChartPie,
+  FaCheckCircle
 } from "react-icons/fa";
 
-export default function Dashboard() {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [success, setSuccess] = useState("");
+const Dashboard = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const navigate = useNavigate();
   axios.defaults.withCredentials = true;
 
   useEffect(() => {
-    axios
-      .get("http://localhost:4000/dashboard")
-      .then((res) => {
-        if (res.data === "Success") {
-          setSuccess("Successfully Verified Admin");
-          setUserName(res.data.userName);
-          setIsLoggedIn(true); // Assuming the response includes userName
-        } else {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get("http://localhost:4000/dashboard");
+
+        if (response.data === "Success") {
+          const user = JSON.parse(localStorage.getItem('user'));
+          setUserName(user?.name || '');
+          setIsLoggedIn(true);
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load dashboard");
+        if (err.response?.status === 401 || err.response?.status === 403) {
           navigate("/login");
         }
-      })
-      .catch((err) => console.log(err));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    setIsLoggedIn(false);
-    setUserName('');
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await axios.post('http://localhost:4000/admin-logout', {}, { withCredentials: true });
+      localStorage.removeItem('user');
+      setIsLoggedIn(false);
+      setUserName('');
+      navigate('/login');
+    } catch (err) {
+      console.error("Error during logout:", err);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-100" style={{ fontFamily: "Satoshi" }}>
@@ -101,12 +127,17 @@ export default function Dashboard() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col">
-        <header className="flex items-center justify-between p-4 bg-[#6C5BD4] text-white">
-          <FaBars
-            className="lg:hidden cursor-pointer text-2xl"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          />
-          <h2 className="text-lg font-semibold">Admin Dashboard</h2>
+        <header className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+          <div className="flex items-center">
+            <FaBars
+              className="lg:hidden cursor-pointer text-2xl mr-4"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            />
+            <div>
+              <h2 className="text-lg font-semibold">Admin Dashboard</h2>
+              <p className="text-sm opacity-90">Welcome back, {userName}</p>
+            </div>
+          </div>
           <div className="relative">
             <div
               className="flex items-center space-x-4 cursor-pointer"
@@ -133,76 +164,114 @@ export default function Dashboard() {
             )}
           </div>
         </header>
-        <main className="flex-grow p-4 bg-gray-100">
-          <h2 className="text-2xl font-semibold mb-4">Welcome to My Lab Verse - Admin Panel</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Dynamic Cards */}
-            <div className="bg-white shadow-md rounded-lg p-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">Tests</h3>
-                <p className="text-gray-600">8</p>
-              </div>
-              <FaFileAlt className="text-gray-400 text-4xl" />
+        <main className="flex-grow p-6 bg-gray-100 overflow-auto">
+          {error && (
+            <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+              {error}
             </div>
-            <div className="bg-white shadow-md rounded-lg p-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">Booked Appointment</h3>
-                <p className="text-gray-600">8</p>
+          )}
+
+          {/* Today's Summary */}
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Today's Summary</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg p-6 text-white">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm opacity-90">Today's Tests</p>
+                    <p className="text-3xl font-bold mt-1">0</p>
+                  </div>
+                  <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+                    <FaFlask className="text-xl" />
+                  </div>
+                </div>
               </div>
-              <FaCalendarCheck className="text-gray-400 text-4xl" />
+
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-6 text-white">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm opacity-90">Pending Approvals</p>
+                    <p className="text-3xl font-bold mt-1">0</p>
+                  </div>
+                  <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+                    <FaHourglassHalf className="text-xl" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 text-white">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm opacity-90">Active Staff</p>
+                    <p className="text-3xl font-bold mt-1">0</p>
+                  </div>
+                  <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+                    <FaUsers className="text-xl" />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="bg-white shadow-md rounded-lg p-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">Pending Appointment</h3>
-                <p className="text-gray-600">2</p>
-              </div>
-              <FaHourglassHalf className="text-gray-400 text-4xl" />
+          </div>
+
+          {/* Quick Actions */}
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <button
+                onClick={() => navigate("/make-report")}
+                className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-center space-x-3"
+              >
+                <div className="bg-indigo-100 p-3 rounded-lg">
+                  <FaFlask className="text-indigo-600 text-xl" />
+                </div>
+                <span className="font-medium text-gray-700">New Report</span>
+              </button>
+
+              <button
+                onClick={() => navigate("/registered-users")}
+                className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-center space-x-3"
+              >
+                <div className="bg-green-100 p-3 rounded-lg">
+                  <FaUsers className="text-green-600 text-xl" />
+                </div>
+                <span className="font-medium text-gray-700">View Users</span>
+              </button>
+
+              <button
+                onClick={() => navigate("/test-list")}
+                className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-center space-x-3"
+              >
+                <div className="bg-purple-100 p-3 rounded-lg">
+                  <FaFileAlt className="text-purple-600 text-xl" />
+                </div>
+                <span className="font-medium text-gray-700">Test Lists</span>
+              </button>
+
+              <button
+                onClick={() => navigate("/settings")}
+                className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-center space-x-3"
+              >
+                <div className="bg-blue-100 p-3 rounded-lg">
+                  <FaCogs className="text-blue-600 text-xl" />
+                </div>
+                <span className="font-medium text-gray-700">Settings</span>
+              </button>
             </div>
-            <div className="bg-white shadow-md rounded-lg p-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">Approved Appointment</h3>
-                <p className="text-gray-600">2</p>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Recent Activity</h2>
+            <div className="border rounded-lg overflow-hidden">
+              <div className="p-4 text-center text-gray-500">
+                No recent activity to display
               </div>
-              <FaThumbsUp className="text-gray-400 text-4xl" />
-            </div>
-            <div className="bg-white shadow-md rounded-lg p-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">Finished Test</h3>
-                <p className="text-gray-600">3</p>
-              </div>
-              <FaFlask className="text-gray-400 text-4xl" />
-            </div>
-            <div className="bg-white shadow-md rounded-lg p-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">Registered Users</h3>
-                <p className="text-gray-600">10</p>
-              </div>
-              <FaUsers className="text-gray-400 text-4xl" />
-            </div>
-            <div className="bg-white shadow-md rounded-lg p-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">Reports Generated</h3>
-                <p className="text-gray-600">15</p>
-              </div>
-              <FaClipboardList className="text-gray-400 text-4xl" />
-            </div>
-            <div className="bg-white shadow-md rounded-lg p-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">Support Tickets</h3>
-                <p className="text-gray-600">5</p>
-              </div>
-              <FaEnvelopeOpenText className="text-gray-400 text-4xl" />
-            </div>
-            <div className="bg-white shadow-md rounded-lg p-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">Analytics</h3>
-                <p className="text-gray-600">View</p>
-              </div>
-              <FaChartPie className="text-gray-400 text-4xl" />
             </div>
           </div>
         </main>
       </div>
     </div>
   );
-}
+};
+
+export default Dashboard;

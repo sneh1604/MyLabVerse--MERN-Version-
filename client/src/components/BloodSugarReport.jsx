@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaBars, FaUserCircle, FaFileAlt, FaFlask, FaTachometerAlt, FaUsers } from "react-icons/fa";
+import { FaBars, FaUserCircle, FaFileAlt, FaFlask, FaTachometerAlt, FaUsers, FaCheck, FaInfoCircle } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 
 function BloodSugarReport() {
     const [clients, setClients] = useState([]);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [showError, setShowError] = useState(false);
+    const [currentStep, setCurrentStep] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState({});
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         clientName: '',
@@ -18,6 +24,38 @@ function BloodSugarReport() {
         totalCholesterol: '',
         triglycerides: ''
     });
+
+    const normalRanges = {
+        fastingBloodSugar: "70-100 mg/dL",
+        postprandialBloodSugar: "Less than 140 mg/dL",
+        hba1c: "4.0-5.6%",
+        totalCholesterol: "125-200 mg/dL",
+        triglycerides: "Less than 150 mg/dL"
+    };
+
+    const formSections = [
+        {
+            title: "Patient Information",
+            fields: [
+                { name: "clientName", label: "Patient Name", type: "select", options: clients },
+            ]
+        },
+        {
+            title: "Blood Sugar Parameters",
+            fields: [
+                { name: "fastingBloodSugar", label: "Fasting Blood Sugar", type: "number", unit: "mg/dL", range: "70-100", required: true },
+                { name: "postprandialBloodSugar", label: "Postprandial Blood Sugar", type: "number", unit: "mg/dL", range: "<140", required: true },
+                { name: "hba1c", label: "HbA1c", type: "number", unit: "%", range: "4.0-5.6", required: true }
+            ]
+        },
+        {
+            title: "Additional Parameters",
+            fields: [
+                { name: "totalCholesterol", label: "Total Cholesterol", type: "number", unit: "mg/dL", range: "125-200", required: true },
+                { name: "triglycerides", label: "Triglycerides", type: "number", unit: "mg/dL", range: "<150", required: true }
+            ]
+        }
+    ];
 
     // Fetch the list of registered users (excluding admins)
     useEffect(() => {
@@ -59,13 +97,44 @@ function BloodSugarReport() {
         }
     };
 
+    const validateForm = () => {
+        const newErrors = {};
+        if (!formData.clientId) {
+            newErrors.clientName = 'Please select a patient';
+        }
+
+        const requiredFields = [
+            'fastingBloodSugar',
+            'postprandialBloodSugar',
+            'hba1c',
+            'totalCholesterol',
+            'triglycerides'
+        ];
+
+        requiredFields.forEach(field => {
+            if (!formData[field]) {
+                newErrors[field] = 'This field is required';
+            }
+        });
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     // Handle form submission
     const handleSubmit = (e) => {
         e.preventDefault();
+        const isValid = validateForm();
+        if (!isValid) {
+            setShowError(true);
+            setTimeout(() => setShowError(false), 3000);
+            return;
+        }
         setModalOpen(true);
     };
 
     const confirmSubmit = () => {
+        setLoading(true);
         axios.post('http://localhost:4000/blood-sugar-report', formData, { withCredentials: true })
             .then(response => {
                 setFormData({
@@ -78,9 +147,13 @@ function BloodSugarReport() {
                     triglycerides: ''
                 });
                 setModalOpen(false);
+                setShowSuccess(true);
+                setTimeout(() => setShowSuccess(false), 3000);
             })
-            .catch(error => console.error('Error submitting report:', error));
+            .catch(error => console.error('Error submitting report:', error))
+            .finally(() => setLoading(false));
     };
+
     const f = document.getElementsByTagName('input');
     for (let i = 0; i < f.length; i++) {
       f[i].addEventListener("wheel", (event) => {
@@ -90,7 +163,7 @@ function BloodSugarReport() {
     }
 
     return (
-        <div className="flex min-h-screen bg-gray-100">
+        <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             {/* Sidebar */}
             <aside
                 className={`bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -158,96 +231,109 @@ function BloodSugarReport() {
                         )}
                     </div>
                 </header>
-                <main className="flex-grow p-6 bg-gray-100">
-                    <h2 className="text-3xl font-semibold text-center mb-6">Submit Blood Sugar Test Details</h2>
-                    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-md shadow-lg">
-                        <div className="grid grid-cols-1 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Client Name:
-                                </label>
-                                <select
-                                    name="clientName"
-                                    value={formData.clientName}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                >
-                                    <option value="">Select Client</option>
-                                    {clients.map(client => (
-                                        <option key={client._id} value={client.name}>
-                                            {client.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Fasting Blood Sugar:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="fastingBloodSugar"
-                                    value={formData.fastingBloodSugar}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Postprandial Blood Sugar:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="postprandialBloodSugar"
-                                    value={formData.postprandialBloodSugar}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    HbA1c:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="hba1c"
-                                    value={formData.hba1c}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Total Cholesterol:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="totalCholesterol"
-                                    value={formData.totalCholesterol}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Triglycerides:
-                                </label>
-                                <input
-                                    type="number"
-                                    name="triglycerides"
-                                    value={formData.triglycerides}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                            </div>
+                <main className="flex-grow p-6 bg-transparent">
+                    <AnimatePresence>
+                        {/* Success Message */}
+                        {showSuccess && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -50 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -50 }}
+                                className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg flex items-center z-50"
+                            >
+                                <FaCheck className="mr-2" />
+                                Report submitted successfully!
+                            </motion.div>
+                        )}
+                        {/* Error Message */}
+                        {showError && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -50 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -50 }}
+                                className="fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-md shadow-lg flex items-center z-50"
+                            >
+                                <FaInfoCircle className="mr-2" />
+                                Please fill all required fields correctly
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <div className="max-w-4xl mx-auto">
+                        <h2 className="text-3xl font-semibold text-center mb-6">Blood Sugar Report</h2>
+
+                        {/* Progress Steps */}
+                        <div className="flex justify-between mb-8">
+                            {[1, 2].map((step) => (
+                                <div key={step} className="flex flex-col items-center relative">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                        currentStep >= step ? 'bg-blue-600 text-white' : 'bg-gray-200'
+                                    }`}>
+                                        {step}
+                                    </div>
+                                    <span className="text-sm mt-2">
+                                        {step === 1 ? 'Patient Info' : 'Blood Sugar Parameters'}
+                                    </span>
+                                    {step < 2 && (
+                                        <div className={`absolute top-5 left-full w-full h-0.5 -z-10 ${
+                                            currentStep > step ? 'bg-blue-600' : 'bg-gray-200'
+                                        }`} />
+                                    )}
+                                </div>
+                            ))}
                         </div>
-                        <button
-                            type="submit"
-                            className="mt-6 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-                        >
-                            Submit Report
-                        </button>
-                    </form>
+
+                        {/* Form content */}
+                        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-md shadow-lg">
+                            {formSections.map((section, index) => (
+                                <div key={index} className="mb-6">
+                                    <h3 className="text-xl font-semibold mb-4">{section.title}</h3>
+                                    <div className="grid grid-cols-1 gap-6">
+                                        {section.fields.map((field) => (
+                                            <div key={field.name}>
+                                                <label className="block text-sm font-medium text-gray-700">
+                                                    {field.label}:
+                                                </label>
+                                                {field.type === "select" ? (
+                                                    <select
+                                                        name={field.name}
+                                                        value={formData[field.name]}
+                                                        onChange={handleChange}
+                                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    >
+                                                        <option value="">Select {field.label}</option>
+                                                        {field.options.map(option => (
+                                                            <option key={option._id} value={option.name}>
+                                                                {option.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <input
+                                                        type={field.type}
+                                                        name={field.name}
+                                                        value={formData[field.name]}
+                                                        onChange={handleChange}
+                                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                    />
+                                                )}
+                                                {errors[field.name] && (
+                                                    <p className="text-red-500 text-sm mt-1">{errors[field.name]}</p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                            <button
+                                type="submit"
+                                className="mt-6 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+                            >
+                                Submit Report
+                            </button>
+                        </form>
+                    </div>
+
                     {modalOpen && (
                         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
                             <div className="bg-white p-6 rounded-md shadow-lg">
