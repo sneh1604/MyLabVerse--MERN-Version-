@@ -24,6 +24,7 @@ import AdministratorDashboard from "./components/AdministratorDashboard";
 import AdministratorRegister from "./components/AdministratorRegister";
 import InitialAdminSetup from "./components/InitialAdminSetup";
 import SingleHemogramReport from "./components/SingleHemogramReport"; // You'll need to create this component
+import BulkUpload from './components/BulkUpload';
 
 export default function App() {
   return (
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/profile" element={<ProfileForm />} /> 
           <Route path="/prescriptionocr" element={<PrescriptionOCR />} />
           <Route path="/hemogram-report" element={<HemogramReport />} />
+          <Route path="/bulk-upload" element={<BulkUpload />} />
           
           {/* Administrator routes */}
           <Route path="/administrator-login" element={<AdministratorLogin />} />

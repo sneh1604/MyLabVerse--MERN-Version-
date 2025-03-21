@@ -23,7 +23,11 @@ const genAI = new GoogleGenerativeAI("AIzaSyAr7rZzlbvBfhKa9fFekY4-LIFW4J2fILQ");
 
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 const ProfileModel = require('./models/Profile');
+const multer = require('multer');
+const xlsx = require('xlsx');
+const UploadHistory = require('./models/UploadHistory');
 
+const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(express.json());
 app.use(cors({
@@ -33,9 +37,20 @@ app.use(cors({
 }));
 app.use(cookieParser());
 
+app.use('/templates', express.static('public/templates'));
+
 mongoose
     .connect(process.env.MONGO_URI)
-    .then(() => console.log('Connected to MongoDB'))
+    .then(() => {
+        console.log('Connected to MongoDB');
+        // Generate templates after successful database connection
+        try {
+            generateTemplates();
+            console.log('Templates generated successfully');
+        } catch (error) {
+            console.error('Error generating templates:', error);
+        }
+    })
     .catch((err) => console.log('Failed to connect to MongoDB', err));
 
 app.post('/register', (req, res) => {
@@ -832,6 +847,172 @@ app.get('/check-admin-exists', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+// Bulk upload endpoint for Hemogram reports
+app.post('/bulk-upload/hemogram', verifyAdministrator, upload.single('file'), async (req, res) => {
+    try {
+        const workbook = xlsx.read(req.file.buffer);
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const data = xlsx.utils.sheet_to_json(sheet);
+
+        let successCount = 0;
+        let failureCount = 0;
+        let errors = [];
+
+        for (let i = 0; i < data.length; i++) {
+            try {
+                const row = data[i];
+                // Validate clientId format
+                if (!mongoose.Types.ObjectId.isValid(row.clientId)) {
+                    throw new Error('Invalid clientId format');
+                }
+
+                const report = await HemogramReportModel.create({
+                    clientId: row.clientId,
+                    clientName: row.clientName,
+                    hemoglobin: row.hemoglobin,
+                    rbc_count: row.rbc_count,
+                    wbc_count: row.wbc_count,
+                    platelet_count: row.platelet_count,
+                    polymorphs: row.polymorphs,
+                    lymphocytes: row.lymphocytes,
+                    eosinophils: row.eosinophils,
+                    monocytes: row.monocytes,
+                    basophils: row.basophils,
+                    pcv: row.pcv,
+                    mcv: row.mcv,
+                    mch: row.mch,
+                    mchc: row.mchc,
+                    rdw: row.rdw,
+                    rbcs: row.rbcs,
+                    wbcs: row.wbcs,
+                    platelet_option: row.platelet_option
+                });
+                successCount++;
+            } catch (err) {
+                failureCount++;
+                errors.push({ 
+                    row: i + 2, 
+                    message: err.message,
+                    details: err.errors ? Object.values(err.errors).map(e => e.message) : []
+                });
+            }
+        }
+
+        // Record upload history
+        await UploadHistory.create({
+            adminId: req.user.id,
+            fileName: req.file.originalname,
+            reportType: 'hemogram',
+            successCount,
+            failureCount,
+            errors
+        });
+
+        res.json({ successCount, failureCount, errors });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to process file', details: error.message });
+    }
+});
+
+// Bulk upload endpoint for Lipid reports
+app.post('/bulk-upload/lipid', verifyAdministrator, upload.single('file'), async (req, res) => {
+    try {
+        const workbook = xlsx.read(req.file.buffer);
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const data = xlsx.utils.sheet_to_json(sheet);
+
+        let successCount = 0;
+        let failureCount = 0;
+        let errors = [];
+
+        for (let i = 0; i < data.length; i++) {
+            try {
+                const row = data[i];
+                const report = await LipidReportModel.create({
+                    clientId: row.clientId,
+                    serumCholesterol: row.serumCholesterol,
+                    ldlCholesterol: row.ldlCholesterol,
+                    totalCholesterolHdlRatio: row.totalCholesterolHdlRatio,
+                    totalLipids: row.totalLipids
+                });
+                successCount++;
+            } catch (err) {
+                failureCount++;
+                errors.push({ row: i + 2, message: err.message });
+            }
+        }
+
+        await UploadHistory.create({
+            adminId: req.user.id,
+            fileName: req.file.originalname,
+            reportType: 'lipid',
+            successCount,
+            failureCount,
+            errors
+        });
+
+        res.json({ successCount, failureCount, errors });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to process file', details: error.message });
+    }
+});
+
+// Bulk upload endpoint for Blood Sugar reports
+app.post('/bulk-upload/bloodsugar', verifyAdministrator, upload.single('file'), async (req, res) => {
+    try {
+        const workbook = xlsx.read(req.file.buffer);
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const data = xlsx.utils.sheet_to_json(sheet);
+
+        let successCount = 0;
+        let failureCount = 0;
+        let errors = [];
+
+        for (let i = 0; i < data.length; i++) {
+            try {
+                const row = data[i];
+                const report = await BloodSugarReport.create({
+                    clientId: row.clientId,
+                    fastingBloodSugar: row.fastingBloodSugar,
+                    totalCholesterol: row.totalCholesterol,
+                    postprandialBloodSugar: row.postprandialBloodSugar
+                });
+                successCount++;
+            } catch (err) {
+                failureCount++;
+                errors.push({ row: i + 2, message: err.message });
+            }
+        }
+
+        await UploadHistory.create({
+            adminId: req.user.id,
+            fileName: req.file.originalname,
+            reportType: 'bloodsugar',
+            successCount,
+            failureCount,
+            errors
+        });
+
+        res.json({ successCount, failureCount, errors });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to process file', details: error.message });
+    }
+});
+
+// Get upload history for an administrator
+app.get('/upload-history', verifyAdministrator, async (req, res) => {
+    try {
+        const history = await UploadHistory.find({ adminId: req.user.id })
+            .sort({ uploadDate: -1 })
+            .limit(50);
+        res.json(history);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch upload history' });
+    }
+});
+
+const generateTemplates = require('./utils/generateTemplates');
 
 app.listen(4000, () => {
     console.log("Server is Running");

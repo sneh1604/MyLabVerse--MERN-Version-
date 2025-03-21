@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   FaBars, FaTachometerAlt, FaUsers, FaChartBar, FaUserTie, FaSignOutAlt, 
-  FaUserCircle, FaClipboardList, FaFlask, FaCog, FaCalendarAlt
+  FaUserCircle, FaClipboardList, FaFlask, FaCog, FaCalendarAlt, FaUpload
 } from 'react-icons/fa';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 import {
@@ -660,6 +660,12 @@ const AdministratorDashboard = () => {
               onClick={handleLogout}
             >
               <FaSignOutAlt className="mr-3" /> Logout
+            </li>
+            <li
+              className="py-2 px-4 flex items-center cursor-pointer hover:bg-indigo-800"
+              onClick={() => navigate('/bulk-upload')}
+            >
+              <FaUpload className="mr-3" /> Bulk Upload Reports
             </li>
           </ul>
         </nav>
