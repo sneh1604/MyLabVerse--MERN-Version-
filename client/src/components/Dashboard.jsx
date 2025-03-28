@@ -32,19 +32,24 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        setLoading(true);
-        const response = await axios.get("http://localhost:4000/dashboard");
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = user?.token;
+        
+        const response = await axios.get('http://localhost:4000/dashboard', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          withCredentials: true
+        });
 
         if (response.data === "Success") {
-          const user = JSON.parse(localStorage.getItem('user'));
           setUserName(user?.name || '');
           setIsLoggedIn(true);
         }
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load dashboard");
-        if (err.response?.status === 401 || err.response?.status === 403) {
-          navigate("/login");
+      } catch (error) {
+        console.error('Dashboard data fetch error:', error);
+        if (error.response?.status === 403) {
+          navigate('/login');
         }
       } finally {
         setLoading(false);

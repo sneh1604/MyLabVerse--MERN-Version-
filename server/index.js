@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
+const { verifyFirebaseToken } = require('./middleware/firebaseAuth'); // Add this line
 
 const UserModel = require("./models/User");
 const TestListModel = require("./models/TestList");
@@ -31,9 +32,10 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(express.json());
 app.use(cors({
-    origin: ['http://localhost:5173'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Add PATCH to allowed methods
-    credentials: true
+  origin: 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(cookieParser());
 
@@ -53,17 +55,36 @@ mongoose
     })
     .catch((err) => console.log('Failed to connect to MongoDB', err));
 
-app.post('/register', (req, res) => {
-    const { name, email, password } = req.body;
-    bcrypt.hash(password, 10)
-        .then(hash => {
-            UserModel.create({ name, email, password: hash })
-                .then(user => {
-                    res.json("Success");
-                    console.log("Register Successfully!");
-                })
-                .catch(err => res.json(err));
-        }).catch(error => res.json(error));
+app.post('/register', async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+
+        // Check if user already exists
+        const existingUser = await UserModel.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: "User already exists" });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Create user with proper userTokenID format
+        const user = await UserModel.create({
+            name,
+            email,
+            password: hashedPassword,
+            userTokenID: `LIMSGL-${Math.floor(Math.random() * 900 + 100)}`,
+            role: 'user',
+            authProvider: 'local'
+        });
+
+        res.status(201).json({ 
+            Status: "Success",
+            message: "Registration successful" 
+        });
+    } catch (err) {
+        console.error('Registration error:', err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 const verifyUser = (req, res, next) => {
@@ -108,34 +129,41 @@ app.get("/dashboard", verifyUser, (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-    const { email, password } = req.body;
     try {
-        const user = await UserModel.findOne({ email: email });
-        if (user) {
-            const match = await bcrypt.compare(password, user.password);
-            if (match) {
-                const token = jwt.sign({ email: user.email, role: user.role, id: user._id }, "wfiefcwmim", { expiresIn: '1d' });
-                res.cookie('token', token);
-                
-                // Track login for admin users
-                if (user.role === 'admin') {
-                    await trackStaffActivity(user._id, 'login');
-                }
-                
-                return res.json({ 
-                    Status: "Success", 
-                    role: user.role, 
-                    name: user.name, 
-                    email: user.email 
-                });
-            } else {
-                return res.json({ message: "The Password is incorrect" });
-            }
-        } else {
-            return res.json({ message: "No Record Existed!" });
+        const { email, password } = req.body;
+        const user = await UserModel.findOne({ email });
+        
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
         }
+
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) {
+            return res.status(401).json({ message: "Invalid password" });
+        }
+
+        const token = jwt.sign(
+            { id: user._id, email: user.email, role: user.role },
+            'wfiefcwmim',
+            { expiresIn: '1d' }
+        );
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 24 * 60 * 60 * 1000
+        });
+
+        return res.json({
+            Status: "Success",
+            role: user.role,
+            name: user.name,
+            email: user.email,
+            userTokenID: user.userTokenID
+        });
     } catch (err) {
-        console.error(err);
+        console.error('Login error:', err);
         return res.status(500).json({ error: "Server error during login" });
     }
 });
@@ -1034,7 +1062,106 @@ app.get('/upload-history', verifyAdministrator, async (req, res) => {
     }
 });
 
+// Update generateTokenID function
+function generateTokenID() {
+  // Generate a 3-digit random number
+  const randomNum = Math.floor(Math.random() * 900) + 100;
+  return `LIMSGL-${randomNum}`;
+}
+
+app.post('/api/auth/google', verifyFirebaseToken, async (req, res) => {
+  try {
+    console.log('Received Google auth request:', req.user);
+    const { email, name } = req.user;
+    
+    if (!email) {
+      throw new Error('No email provided from Google auth');
+    }
+
+    // Check if user exists
+    let user = await UserModel.findOne({ email });
+    
+    if (user) {
+      // Update existing user
+      user.firebaseUID = req.user.uid;
+      user.name = user.name || name;
+      if (!user.userTokenID) {
+        user.userTokenID = generateTokenID();
+      }
+      await user.save();
+    } else {
+      // Create new user with valid token ID
+      user = await UserModel.create({
+        email,
+        name,
+        firebaseUID: req.user.uid,
+        userTokenID: generateTokenID(),
+        authProvider: 'google',
+        role: 'user'
+      });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      'wfiefcwmim',
+      { expiresIn: '1d' }
+    );
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
+    res.json({
+      Status: "Success",
+      role: user.role,
+      name: user.name,
+      email: user.email,
+      userTokenID: user.userTokenID
+    });
+  } catch (error) {
+    console.error('Google auth error:', error);
+    res.status(500).json({ 
+      error: "Authentication failed",
+      details: error.message
+    });
+  }
+});
+
+// Function to generate unique userTokenID
+function generateUserTokenID() {
+  return 'UT' + Date.now().toString(36).toUpperCase() + 
+         Math.random().toString(36).substring(2, 7).toUpperCase();
+}
+
 const generateTemplates = require('./utils/generateTemplates');
+
+// Add global error handler
+app.use((err, req, res, next) => {
+  console.error('Global error:', err);
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
+
+// Add request logger
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
 
 app.listen(4000, () => {
     console.log("Server is Running");
