@@ -862,44 +862,36 @@ app.post('/bulk-upload/hemogram', verifyAdministrator, upload.single('file'), as
         for (let i = 0; i < data.length; i++) {
             try {
                 const row = data[i];
+                // Validate required fields
+                const requiredFields = [
+                    'clientId', 'clientName', 'hemoglobin', 'rbc_count', 'wbc_count',
+                    'platelet_count', 'polymorphs', 'lymphocytes', 'eosinophils',
+                    'monocytes', 'basophils', 'pcv', 'mcv', 'mch', 'mchc', 'rdw',
+                    'rbcs', 'wbcs', 'platelet_option'
+                ];
+
+                const missingFields = requiredFields.filter(field => !row[field]);
+                if (missingFields.length > 0) {
+                    throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+                }
+
                 // Validate clientId format
                 if (!mongoose.Types.ObjectId.isValid(row.clientId)) {
                     throw new Error('Invalid clientId format');
                 }
 
-                const report = await HemogramReportModel.create({
-                    clientId: row.clientId,
-                    clientName: row.clientName,
-                    hemoglobin: row.hemoglobin,
-                    rbc_count: row.rbc_count,
-                    wbc_count: row.wbc_count,
-                    platelet_count: row.platelet_count,
-                    polymorphs: row.polymorphs,
-                    lymphocytes: row.lymphocytes,
-                    eosinophils: row.eosinophils,
-                    monocytes: row.monocytes,
-                    basophils: row.basophils,
-                    pcv: row.pcv,
-                    mcv: row.mcv,
-                    mch: row.mch,
-                    mchc: row.mchc,
-                    rdw: row.rdw,
-                    rbcs: row.rbcs,
-                    wbcs: row.wbcs,
-                    platelet_option: row.platelet_option
-                });
+                const report = await HemogramReportModel.create(row);
                 successCount++;
             } catch (err) {
                 failureCount++;
-                errors.push({ 
-                    row: i + 2, 
+                errors.push({
+                    row: i + 2,
                     message: err.message,
                     details: err.errors ? Object.values(err.errors).map(e => e.message) : []
                 });
             }
         }
 
-        // Record upload history
         await UploadHistory.create({
             adminId: req.user.id,
             fileName: req.file.originalname,
@@ -929,17 +921,32 @@ app.post('/bulk-upload/lipid', verifyAdministrator, upload.single('file'), async
         for (let i = 0; i < data.length; i++) {
             try {
                 const row = data[i];
-                const report = await LipidReportModel.create({
-                    clientId: row.clientId,
-                    serumCholesterol: row.serumCholesterol,
-                    ldlCholesterol: row.ldlCholesterol,
-                    totalCholesterolHdlRatio: row.totalCholesterolHdlRatio,
-                    totalLipids: row.totalLipids
-                });
+                // Validate required fields
+                const requiredFields = [
+                    'clientId', 'clientName', 'serumCholesterol', 'serumTriglyceride',
+                    'hdlCholesterol', 'ldlCholesterol', 'vldlCholesterol', 'ldlHdlRatio',
+                    'totalCholesterolHdlRatio', 'totalLipids'
+                ];
+
+                const missingFields = requiredFields.filter(field => !row[field]);
+                if (missingFields.length > 0) {
+                    throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+                }
+
+                // Validate clientId format
+                if (!mongoose.Types.ObjectId.isValid(row.clientId)) {
+                    throw new Error('Invalid clientId format');
+                }
+
+                const report = await LipidReportModel.create(row);
                 successCount++;
             } catch (err) {
                 failureCount++;
-                errors.push({ row: i + 2, message: err.message });
+                errors.push({
+                    row: i + 2,
+                    message: err.message,
+                    details: err.errors ? Object.values(err.errors).map(e => e.message) : []
+                });
             }
         }
 
@@ -972,16 +979,31 @@ app.post('/bulk-upload/bloodsugar', verifyAdministrator, upload.single('file'), 
         for (let i = 0; i < data.length; i++) {
             try {
                 const row = data[i];
-                const report = await BloodSugarReport.create({
-                    clientId: row.clientId,
-                    fastingBloodSugar: row.fastingBloodSugar,
-                    totalCholesterol: row.totalCholesterol,
-                    postprandialBloodSugar: row.postprandialBloodSugar
-                });
+                // Validate required fields
+                const requiredFields = [
+                    'clientId', 'clientName', 'fastingBloodSugar', 'postprandialBloodSugar',
+                    'hba1c', 'totalCholesterol', 'triglycerides'
+                ];
+
+                const missingFields = requiredFields.filter(field => !row[field]);
+                if (missingFields.length > 0) {
+                    throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+                }
+
+                // Validate clientId format
+                if (!mongoose.Types.ObjectId.isValid(row.clientId)) {
+                    throw new Error('Invalid clientId format');
+                }
+
+                const report = await BloodSugarReport.create(row);
                 successCount++;
             } catch (err) {
                 failureCount++;
-                errors.push({ row: i + 2, message: err.message });
+                errors.push({
+                    row: i + 2,
+                    message: err.message,
+                    details: err.errors ? Object.values(err.errors).map(e => e.message) : []
+                });
             }
         }
 
