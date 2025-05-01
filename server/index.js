@@ -16,6 +16,7 @@ const BloodSugarReport = require('./models/BloodSugar');
 const AdministratorModel = require('./models/Administrator');
 const StaffActivityModel = require('./models/StaffActivity');
 const PerformanceMetricsModel = require('./models/PerformanceMetrics');
+const User = require('./models/User'); // Add this line
 dotenv.config();
 const app = express();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -335,7 +336,6 @@ app.get('/administrator/lab-statistics', verifyAdministrator, async (req, res) =
     }
 });
 
-// Track staff activity (middleware or direct call)
 const trackStaffActivity = async (staffId, activityType, details = {}) => {
     try {
         await StaffActivityModel.create({
@@ -346,6 +346,18 @@ const trackStaffActivity = async (staffId, activityType, details = {}) => {
         });
     } catch (error) {
         console.error('Error tracking staff activity:', error);
+    }
+};
+
+const updatePerformanceMetrics = async (staffId, updateData) => {
+    try {
+        await PerformanceMetricsModel.findOneAndUpdate(
+            { staffId, date: { $gte: new Date().setHours(0, 0, 0, 0) } },
+            { $inc: updateData },
+            { upsert: true, new: true }
+        );
+    } catch (err) {
+        console.error('Error updating performance metrics:', err);
     }
 };
 
@@ -1161,6 +1173,51 @@ app.use((err, req, res, next) => {
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
+});
+
+app.get('/staff/performance-metrics', verifyUser, async (req, res) => {
+    try {
+        // Verify user exists and is staff/admin
+        const user = await User.findById(req.user.id);
+        if (!user || !['admin', 'staff'].includes(user.role)) {
+            return res.status(403).json({ error: 'Unauthorized access' });
+        }
+
+        const metrics = await PerformanceMetricsModel.findOne({ staffId: req.user.id })
+            .populate('staffId', 'name email')
+            .sort({ date: -1 });
+
+        res.json(metrics || { message: 'No metrics found' });
+    } catch (err) {
+        console.error('Performance metrics error:', err);
+        res.status(500).json({
+            error: 'Failed to fetch performance metrics',
+            details: err.message
+        });
+    }
+});
+
+app.get('/staff/activities', verifyUser, async (req, res) => {
+    try {
+        // Verify user exists and is staff/admin
+        const user = await User.findById(req.user.id);
+        if (!user || !['admin', 'staff'].includes(user.role)) {
+            return res.status(403).json({ error: 'Unauthorized access' });
+        }
+
+        const activities = await StaffActivityModel.find({ staffId: req.user.id })
+            .populate('staffId', 'name email')
+            .sort({ timestamp: -1 })
+            .limit(10);
+
+        res.json(activities);
+    } catch (err) {
+        console.error('Staff activities error:', err);
+        res.status(500).json({
+            error: 'Failed to fetch staff activities',
+            details: err.message
+        });
+    }
 });
 
 app.listen(4000, () => {

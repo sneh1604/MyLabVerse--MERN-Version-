@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const PerformanceMetricsSchema = new mongoose.Schema({
     staffId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'users',
+        ref: 'User',  // Changed from 'users' to 'User'
         required: true
     },
     date: {
