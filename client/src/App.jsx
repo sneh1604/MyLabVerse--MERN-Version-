@@ -25,6 +25,7 @@ import AdministratorRegister from "./components/AdministratorRegister";
 import InitialAdminSetup from "./components/InitialAdminSetup";
 import SingleHemogramReport from "./components/SingleHemogramReport"; // You'll need to create this component
 import BulkUpload from './components/BulkUpload';
+import ForgotPassword from './components/ForgotPassword'; // Import the ForgotPassword component
 
 export default function App() {
   return (
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="/administrator-dashboard" element={<AdministratorDashboard />} />
           <Route path="/administrator-register" element={<AdministratorRegister />} />
           <Route path="/initial-admin-setup" element={<InitialAdminSetup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
         </Routes>
       </BrowserRouter>
     </div>

@@ -188,6 +188,9 @@ const Login = () => {
                   className='pl-10 w-full border-2 border-gray-300 rounded-lg py-2 px-4 focus:outline-none focus:border-blue-500 transition-colors'
                 />
               </div>
+              <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-800 mt-1 inline-block">
+                Forgot Password?
+              </Link>
             </div>
 
             <button 
