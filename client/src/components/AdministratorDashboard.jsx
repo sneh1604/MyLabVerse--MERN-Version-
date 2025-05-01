@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   FaBars, FaTachometerAlt, FaUsers, FaChartBar, FaUserTie, FaSignOutAlt, 
-  FaUserCircle, FaClipboardList, FaFlask, FaCog, FaCalendarAlt, FaUpload
+  FaUserCircle, FaClipboardList, FaFlask, FaCog, FaCalendarAlt, FaUpload,
+  FaFileAlt, FaClock, FaHistory, FaInbox, FaSignInAlt, FaUserCog, FaEdit, FaCircle, FaUserClock, FaCalendar
 } from 'react-icons/fa';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 import {
@@ -18,6 +19,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import AppointmentManager from './AppointmentManager';
 
 // Register ChartJS components
 ChartJS.register(
@@ -44,6 +46,9 @@ const AdministratorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userName, setUserName] = useState('');
+  const [dateRange, setDateRange] = useState('week'); // 'week', 'month', 'year'
+  const [selectedReportTypes, setSelectedReportTypes] = useState(['hemogram', 'lipid', 'bloodSugar']);
+  const [chartView, setChartView] = useState('line'); // 'line' or 'bar'
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -254,6 +259,8 @@ const AdministratorDashboard = () => {
         return renderReportsTab();
       case 'analytics':
         return renderAnalyticsTab();
+      case 'appointments':
+        return renderAppointmentsTab();
       default:
         return renderOverviewTab();
     }
@@ -344,29 +351,44 @@ const AdministratorDashboard = () => {
   const renderStaffTab = () => {
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-800">Lab Assistant Management</h2>
+        <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+          <FaUserTie className="mr-3 text-indigo-600" />
+          Lab Assistant Management
+        </h2>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Staff List */}
-          <div className="bg-white rounded-lg shadow-md p-4 lg:col-span-1">
-            <h3 className="text-lg font-semibold mb-4">Lab Assistants</h3>
+          {/* Staff List with Enhanced UI */}
+          <div className="bg-white rounded-xl shadow-md p-6 lg:col-span-1 border border-gray-100">
+            <h3 className="text-lg font-semibold mb-4 flex items-center">
+              <FaUsers className="mr-2 text-indigo-500" />
+              Lab Assistants
+            </h3>
             {staffList.length === 0 ? (
-              <p className="text-gray-500">No lab assistants found</p>
+              <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+                <FaUserCircle className="text-5xl mb-3 text-gray-300" />
+                <p>No lab assistants found</p>
+              </div>
             ) : (
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {staffList.map(staff => (
                   <li key={staff._id}>
                     <button
-                      className={`w-full text-left p-3 rounded-lg transition-colors ${
-                        selectedStaff === staff._id ? 'bg-indigo-100 text-indigo-800' : 'hover:bg-gray-100'
+                      className={`w-full text-left p-4 rounded-lg transition-all transform hover:scale-102 ${
+                        selectedStaff === staff._id 
+                          ? 'bg-indigo-50 border-2 border-indigo-200' 
+                          : 'hover:bg-gray-50 border border-gray-100'
                       }`}
                       onClick={() => handleStaffSelect(staff._id)}
                     >
                       <div className="flex items-center">
-                        <FaUserCircle className="mr-2 text-gray-600" />
-                        <div>
-                          <p className="font-semibold">{staff.name}</p>
-                          <p className="text-sm text-gray-600">{staff.email}</p>
+                        <div className="bg-indigo-100 p-2 rounded-full">
+                          <FaUserCircle className={`text-xl ${
+                            selectedStaff === staff._id ? 'text-indigo-600' : 'text-gray-600'
+                          }`} />
+                        </div>
+                        <div className="ml-3">
+                          <p className="font-semibold text-gray-800">{staff.name}</p>
+                          <p className="text-sm text-gray-500">{staff.email}</p>
                         </div>
                       </div>
                     </button>
@@ -375,105 +397,158 @@ const AdministratorDashboard = () => {
               </ul>
             )}
           </div>
-          
-          {/* Staff Performance */}
-          <div className="bg-white rounded-lg shadow-md p-4 lg:col-span-2">
-            <h3 className="text-lg font-semibold mb-4">Performance Metrics</h3>
-            {!selectedStaff ? (
-              <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-                <FaUserTie className="text-5xl mb-4" />
-                <p>Select a staff member to view performance metrics</p>
-              </div>
-            ) : staffPerformance.length === 0 ? (
-              <div className="text-gray-500 text-center py-4">No performance data available for this staff member</div>
-            ) : (
+
+          {/* Staff Activities with Enhanced UI */}
+          <div className="lg:col-span-2 space-y-6">
+            {selectedStaff ? (
               <>
-                <div className="mb-6">
-                  <h4 className="font-medium text-gray-700 mb-2">Activity Summary</h4>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-sm text-gray-500">Reports Generated</p>
-                      <p className="text-2xl font-bold">
-                        {staffPerformance.reduce((sum, metric) => sum + metric.reportsGenerated, 0)}
-                      </p>
+                {/* Performance Metrics Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="bg-white rounded-xl shadow-sm p-5 border border-l-4 border-l-indigo-500">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Reports Generated</p>
+                        <p className="text-2xl font-bold text-gray-800 mt-2">
+                          {staffPerformance.reduce((sum, metric) => sum + metric.reportsGenerated, 0)}
+                        </p>
+                      </div>
+                      <div className="bg-indigo-100 p-3 rounded-full">
+                        <FaFileAlt className="text-indigo-600" />
+                      </div>
                     </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-sm text-gray-500">Clients Served</p>
-                      <p className="text-2xl font-bold">
-                        {staffPerformance.reduce((sum, metric) => sum + metric.clientsServed, 0)}
-                      </p>
+                  </div>
+
+                  <div className="bg-white rounded-xl shadow-sm p-5 border border-l-4 border-l-green-500">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Tests Processed</p>
+                        <p className="text-2xl font-bold text-gray-800 mt-2">
+                          {staffPerformance.reduce((sum, metric) => sum + metric.testsProcessed, 0)}
+                        </p>
+                      </div>
+                      <div className="bg-green-100 p-3 rounded-full">
+                        <FaFlask className="text-green-600" />
+                      </div>
                     </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-sm text-gray-500">Tests Processed</p>
-                      <p className="text-2xl font-bold">
-                        {staffPerformance.reduce((sum, metric) => sum + metric.testsProcessed, 0)}
-                      </p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-sm text-gray-500">Avg. Processing Time</p>
-                      <p className="text-2xl font-bold">
-                        {staffPerformance.length > 0 ? 
-                          Math.round(staffPerformance.reduce((sum, metric) => sum + metric.averageProcessingTime, 0) / staffPerformance.length) : 
-                          0} min
-                      </p>
+                  </div>
+
+                  <div className="bg-white rounded-xl shadow-sm p-5 border border-l-4 border-l-purple-500">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Avg. Processing Time</p>
+                        <p className="text-2xl font-bold text-gray-800 mt-2">
+                          {staffPerformance.length > 0 
+                            ? Math.round(staffPerformance.reduce((sum, metric) => 
+                                sum + metric.averageProcessingTime, 0) / staffPerformance.length) 
+                            : 0} min
+                        </p>
+                      </div>
+                      <div className="bg-purple-100 p-3 rounded-full">
+                        <FaClock className="text-purple-600" />
+                      </div>
                     </div>
                   </div>
                 </div>
-                
-                <h4 className="font-medium text-gray-700 mb-2">Performance Trend</h4>
-                <div className="h-64">
-                  {getStaffPerformanceData() && <Line data={getStaffPerformanceData()} options={{ maintainAspectRatio: false }} />}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-        
-        {/* Staff Activities */}
-        {selectedStaff && (
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <h3 className="text-lg font-semibold mb-4">Recent Activities</h3>
-            {staffActivities.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No activities recorded for this staff member</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {staffActivities.map((activity, index) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{activity.activityType.replace('_', ' ')}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">
-                            {activity.details && activity.details.reportType && (
-                              <>Report Type: {activity.details.reportType}</>
-                            )}
-                            {activity.details && activity.details.action && (
-                              <>, Action: {activity.details.action}</>
+
+                {/* Recent Activities Section */}
+                <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+                  <h3 className="text-lg font-semibold mb-6 flex items-center">
+                    <FaHistory className="mr-2 text-indigo-500" />
+                    Recent Activities
+                  </h3>
+                  
+                  {staffActivities.length === 0 ? (
+                    <div className="text-center py-8">
+                      <FaInbox className="text-5xl text-gray-300 mx-auto mb-3" />
+                      <p className="text-gray-500">No activities recorded yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {staffActivities.map((activity, index) => (
+                        <div key={index} 
+                          className="flex items-start p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
+                          <div className={`p-3 rounded-full mr-4 ${
+                            getActivityColor(activity.activityType).bgColor
+                          }`}>
+                            {getActivityIcon(activity.activityType)}
+                          </div>
+                          <div className="flex-grow">
+                            <div className="flex justify-between items-start">
+                              <h4 className="font-medium text-gray-800 capitalize">
+                                {activity.activityType.replace('_', ' ')}
+                              </h4>
+                              <span className="text-sm text-gray-500">
+                                {new Date(activity.timestamp).toLocaleString()}
+                              </span>
+                            </div>
+                            {activity.details && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                {activity.details.reportType && (
+                                  <span className="inline-flex items-center bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-2">
+                                    {activity.details.reportType}
+                                  </span>
+                                )}
+                                {activity.details.action && (
+                                  <span className="inline-flex items-center bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                    {activity.details.action}
+                                  </span>
+                                )}
+                              </p>
                             )}
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(activity.timestamp).toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="bg-white rounded-xl shadow-md p-8 text-center">
+                <FaUserClock className="text-6xl text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">Select a Lab Assistant</h3>
+                <p className="text-gray-500">Choose a lab assistant from the list to view their performance metrics and activities</p>
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
     );
+  };
+
+  // Helper function to get activity icon
+  const getActivityIcon = (activityType) => {
+    switch (activityType) {
+      case 'login':
+        return <FaSignInAlt className="text-green-600" />;
+      case 'logout':
+        return <FaSignOutAlt className="text-red-600" />;
+      case 'report_creation':
+        return <FaFileAlt className="text-blue-600" />;
+      case 'user_management':
+        return <FaUserCog className="text-purple-600" />;
+      case 'test_update':
+        return <FaEdit className="text-amber-600" />;
+      default:
+        return <FaCircle className="text-gray-600" />;
+    }
+  };
+
+  // Helper function to get activity colors
+  const getActivityColor = (activityType) => {
+    switch (activityType) {
+      case 'login':
+        return { bgColor: 'bg-green-100' };
+      case 'logout':
+        return { bgColor: 'bg-red-100' };
+      case 'report_creation':
+        return { bgColor: 'bg-blue-100' };
+      case 'user_management':
+        return { bgColor: 'bg-purple-100' };
+      case 'test_update':
+        return { bgColor: 'bg-amber-100' };
+      default:
+        return { bgColor: 'bg-gray-100' };
+    }
   };
 
   // Render the reports management tab
@@ -518,11 +593,189 @@ const AdministratorDashboard = () => {
           </div>
         </div>
         
-        {/* Monthly Report Trend */}
+        {/* Enhanced Weekly Report Generation Section */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold mb-4">Weekly Report Generation</h3>
-          <div className="h-80">
-            {getChartData() && <Line data={getChartData()} options={{ maintainAspectRatio: false }} />}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+            <h3 className="text-xl font-semibold flex items-center">
+              <FaChartBar className="mr-2 text-indigo-600" />
+              Report Generation Analytics
+            </h3>
+            
+            <div className="flex flex-wrap gap-3 mt-4 sm:mt-0">
+              {/* Date Range Filter */}
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                {['week', 'month', 'year'].map((range) => (
+                  <button
+                    key={range}
+                    onClick={() => setDateRange(range)}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                      dateRange === range
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {range.charAt(0).toUpperCase() + range.slice(1)}
+                  </button>
+                ))}
+              </div>
+
+              {/* Chart Type Toggle */}
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setChartView('line')}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                    chartView === 'line'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  Line
+                </button>
+                <button
+                  onClick={() => setChartView('bar')}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                    chartView === 'bar'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  Bar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Report Type Filters */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {[
+              { id: 'hemogram', label: 'Hemogram', color: 'blue' },
+              { id: 'lipid', label: 'Lipid', color: 'red' },
+              { id: 'bloodSugar', label: 'Blood Sugar', color: 'green' }
+            ].map(type => (
+              <label
+                key={type.id}
+                className="inline-flex items-center cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  className="hidden"
+                  checked={selectedReportTypes.includes(type.id)}
+                  onChange={() => {
+                    setSelectedReportTypes(prev =>
+                      prev.includes(type.id)
+                        ? prev.filter(t => t !== type.id)
+                        : [...prev, type.id]
+                    )
+                  }}
+                />
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-medium
+                    ${selectedReportTypes.includes(type.id)
+                      ? `bg-${type.color}-100 text-${type.color}-800 border-2 border-${type.color}-300`
+                      : 'bg-gray-100 text-gray-600 border-2 border-transparent'
+                    } transition-all`}
+                >
+                  {type.label}
+                </span>
+              </label>
+            ))}
+          </div>
+
+          {/* Chart Container with Animation */}
+          <div className="h-80 transition-all duration-300 ease-in-out">
+            {getChartData() && (
+              chartView === 'line' ? (
+                <Line
+                  data={{
+                    ...getChartData(),
+                    datasets: getChartData().datasets.filter(ds =>
+                      selectedReportTypes.includes(ds.label.toLowerCase())
+                    )
+                  }}
+                  options={{
+                    maintainAspectRatio: false,
+                    animations: {
+                      tension: {
+                        duration: 1000,
+                        easing: 'linear'
+                      }
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        title: {
+                          display: true,
+                          text: 'Number of Reports'
+                        }
+                      },
+                      x: {
+                        title: {
+                          display: true,
+                          text: `Date (${dateRange})`
+                        }
+                      }
+                    },
+                    plugins: {
+                      legend: {
+                        position: 'top',
+                        labels: {
+                          usePointStyle: true,
+                          pointStyle: 'circle'
+                        }
+                      },
+                      tooltip: {
+                        mode: 'index',
+                        intersect: false
+                      }
+                    },
+                    interaction: {
+                      mode: 'nearest',
+                      axis: 'x',
+                      intersect: false
+                    }
+                  }}
+                />
+              ) : (
+                <Bar
+                  data={{
+                    ...getChartData(),
+                    datasets: getChartData().datasets.filter(ds =>
+                      selectedReportTypes.includes(ds.label.toLowerCase())
+                    )
+                  }}
+                  options={{
+                    maintainAspectRatio: false,
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        title: {
+                          display: true,
+                          text: 'Number of Reports'
+                        }
+                      }
+                    },
+                    plugins: {
+                      legend: {
+                        position: 'top'
+                      }
+                    }
+                  }}
+                />
+              )
+            )}
+          </div>
+
+          {/* Summary Statistics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 p-4 bg-gray-50 rounded-lg">
+            {selectedReportTypes.map(type => (
+              <div key={type} className="text-center">
+                <p className="text-sm text-gray-600">{type.charAt(0).toUpperCase() + type.slice(1)}</p>
+                <p className="text-xl font-bold text-gray-800">
+                  {labStatistics?.totalReports[type] || 0}
+                </p>
+                <p className="text-xs text-gray-500">Total Reports</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -606,6 +859,11 @@ const AdministratorDashboard = () => {
     );
   };
 
+  // Render the appointments tab
+  const renderAppointmentsTab = () => {
+    return <AppointmentManager />;
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-100" style={{ fontFamily: 'Satoshi' }}>
       {/* Sidebar */}
@@ -654,6 +912,14 @@ const AdministratorDashboard = () => {
               onClick={() => setActiveTab('analytics')}
             >
               <FaChartBar className="mr-3" /> Analytics
+            </li>
+            <li
+              className={`py-2 px-4 flex items-center cursor-pointer ${
+                activeTab === 'appointments' ? 'bg-indigo-800' : 'hover:bg-indigo-800'
+              }`}
+              onClick={() => setActiveTab('appointments')}
+            >
+              <FaCalendar className="mr-3" /> Appointments
             </li>
             <li
               className="py-2 px-4 flex items-center text-red-300 hover:bg-indigo-800 cursor-pointer mt-8"

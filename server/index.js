@@ -17,6 +17,7 @@ const AdministratorModel = require('./models/Administrator');
 const StaffActivityModel = require('./models/StaffActivity');
 const PerformanceMetricsModel = require('./models/PerformanceMetrics');
 const User = require('./models/User'); // Add this line
+const Appointment = require('./models/Appointment'); // Add this line
 dotenv.config();
 const app = express();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -92,16 +93,15 @@ const verifyUser = (req, res, next) => {
     const token = req.cookies.token || req.query.token || req.headers.authorization?.split(' ')[1];
     if (!token) {
         return res.status(403).json("Token is missing");
-    } else {
-        jwt.verify(token, 'wfiefcwmim', (err, decoded) => {
-            if (err) {
-                return res.status(403).json("Error with token");
-            } else {
-                req.user = decoded; // Add the decoded user data to the request object
-                next();
-            }
-        });
     }
+    
+    jwt.verify(token, 'wfiefcwmim', (err, decoded) => {
+        if (err) {
+            return res.status(403).json("Error with token");
+        }
+        req.user = decoded;
+        next();
+    });
 };
 
 // Verify Administrator middleware
@@ -125,7 +125,6 @@ const verifyAdministrator = (req, res, next) => {
 };
 
 app.get("/dashboard", verifyUser, (req, res) => {
-    res.json("Success");
     return res.json({ message: "Successfully logged in admin" });
 });
 
@@ -382,13 +381,27 @@ app.post('/test-list', verifyUser, (req, res) => {
         .catch(err => res.status(400).json(err));
 });
 
-app.get('/test-list', verifyUser, (req, res) => {
-    TestListModel.find({ delete_flag: false })
-        .then(tests => res.json(tests))
-        .catch(err => {
-            console.error(err);
-            res.status(500).json({ error: 'Failed to fetch test list' });
+app.get('/test-list', verifyUser, async (req, res) => {
+    try {
+        // Find all active and non-deleted tests
+        const tests = await TestListModel.find({
+            delete_flag: false,
+            status: true
+        }).select('name cost description status');
+        
+        if (!tests || tests.length === 0) {
+            return res.status(404).json({ message: 'No active tests found' });
+        }
+        
+        console.log('Tests fetched:', tests); // Debug log
+        return res.json(tests);
+    } catch (err) {
+        console.error('Error fetching test list:', err);
+        return res.status(500).json({ 
+            error: 'Failed to fetch test list',
+            details: err.message 
         });
+    }
 });
 
 app.put('/test-list/:id', verifyUser, (req, res) => {
@@ -738,19 +751,12 @@ app.get('/blood-sugar-graph', verifyUser, async (req, res) => {
 
 app.post('/aiml', async (req, res) => {
     try {
-        // console.log(req.body);
-//         let keys = [];
-//         for (var k in req.body) keys.push(k);
-// console.log(keys);
         const prompt = `Here is my medical report in json format. create overall summary of it, also provide steps to control it . OUTPUT in JSON ONLY no output formating, just raw json as output. <report>${JSON.stringify( req.body)}</report>`;
         let result = await model.generateContent([prompt]);
         res.json(result.response.text());
-        // res.json("AA");
-
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: `Failed ${error}` });
-
     }
 });
 
@@ -1151,28 +1157,157 @@ function generateUserTokenID() {
 
 const generateTemplates = require('./utils/generateTemplates');
 
-// Add global error handler
-app.use((err, req, res, next) => {
-  console.error('Global error:', err);
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-  });
+// Get available time slots for a specific date
+app.get('/available-slots', verifyUser, async (req, res) => {
+  try {
+    const { date } = req.query;
+    const existingAppointments = await Appointment.find({
+      appointmentDate: new Date(date)
+    });
+
+    // Generate all possible slots between 9 AM and 5 PM
+    const allSlots = [];
+    for (let hour = 9; hour < 17; hour++) {
+      allSlots.push(`${hour}:00`);
+      allSlots.push(`${hour}:30`);
+    }
+
+    // Filter out booked slots
+    const bookedSlots = existingAppointments.map(apt => apt.timeSlot);
+    const availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
+
+    res.json(availableSlots);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch available slots' });
+  }
 });
 
-// Add request logger
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
+// Book new appointment
+app.post('/appointments', verifyUser, async (req, res) => {
+  try {
+    const { testId, appointmentDate, timeSlot, notes } = req.body;
+    
+    // Validate if the slot is still available
+    const existingAppointment = await Appointment.findOne({
+      appointmentDate: new Date(appointmentDate),
+      timeSlot
+    });
+
+    if (existingAppointment) {
+      return res.status(400).json({ error: 'This time slot is no longer available' });
+    }
+
+    const appointment = await Appointment.create({
+      userId: req.user.id,
+      testId,
+      appointmentDate: new Date(appointmentDate),
+      timeSlot,
+      notes
+    });
+
+    await appointment.populate('testId');
+    
+    res.json(appointment);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to book appointment' });
+  }
 });
 
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({ 
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
+// Get user appointments
+app.get('/user/appointments', verifyUser, async (req, res) => {
+    try {
+        const appointments = await Appointment.find({ userId: req.user.id })
+            .populate('testId')
+            .sort({ appointmentDate: 1 });
+            
+        return res.json(appointments);
+    } catch (error) {
+        if (!res.headersSent) {
+            return res.status(500).json({ error: 'Failed to fetch appointments' });
+        }
+    }
+});
+
+// Get all appointments (staff only)
+app.get('/staff/appointments', verifyUser, async (req, res) => {
+    try {
+        if (!['admin', 'staff'].includes(req.user.role)) {
+            return res.status(403).json({ error: 'Unauthorized access' });
+        }
+
+        // Get today's date at midnight
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const appointments = await Appointment.find({
+            appointmentDate: { $gte: today }
+        })
+        .populate('userId', 'name email')
+        .populate('testId', 'name cost')
+        .sort({ appointmentDate: 1, timeSlot: 1 });
+        
+        // Group appointments by date
+        const groupedAppointments = appointments.reduce((acc, apt) => {
+            const date = apt.appointmentDate.toISOString().split('T')[0];
+            if (!acc[date]) {
+                acc[date] = [];
+            }
+            acc[date].push(apt);
+            return acc;
+        }, {});
+        
+        return res.json(appointments);
+    } catch (error) {
+        console.error('Error fetching staff appointments:', error);
+        return res.status(500).json({ 
+            error: 'Failed to fetch appointments',
+            details: error.message 
+        });
+    }
+});
+
+// Update appointment status
+app.patch('/appointments/:id', verifyUser, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        
+        if (!['pending', 'confirmed', 'cancelled'].includes(status)) {
+            return res.status(400).json({ error: 'Invalid status value' });
+        }
+
+        const appointment = await Appointment.findByIdAndUpdate(
+            id,
+            { 
+                status,
+                updatedAt: new Date(),
+                updatedBy: req.user.id
+            },
+            { new: true }
+        )
+        .populate('userId', 'name email')
+        .populate('testId', 'name cost');
+
+        if (!appointment) {
+            return res.status(404).json({ error: 'Appointment not found' });
+        }
+
+        // Track staff activity
+        if (req.user.role === 'admin' || req.user.role === 'staff') {
+            await trackStaffActivity(req.user.id, 'appointment_update', {
+                appointmentId: id,
+                newStatus: status
+            });
+        }
+
+        res.json(appointment);
+    } catch (error) {
+        console.error('Error updating appointment:', error);
+        res.status(500).json({ 
+            error: 'Failed to update appointment',
+            details: error.message 
+        });
+    }
 });
 
 app.get('/staff/performance-metrics', verifyUser, async (req, res) => {
@@ -1216,6 +1351,23 @@ app.get('/staff/activities', verifyUser, async (req, res) => {
         res.status(500).json({
             error: 'Failed to fetch staff activities',
             details: err.message
+        });
+    }
+});
+
+// Add global error handler
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
+
+app.use((err, req, res, next) => {
+    console.error('Global error:', err);
+    if (!res.headersSent) {
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: process.env.NODE_ENV === 'development' ? err.message : undefined,
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
         });
     }
 });

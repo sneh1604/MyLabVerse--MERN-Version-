@@ -371,26 +371,39 @@ const Home = () => {
             </div>
 
             {/* Blood Sugar Test Card */}
-            <div className="group relative overflow-hidden rounded-xl shadow-lg">
-              <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-400 opacity-90 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative p-6 flex flex-col h-full">
-                <div className="flex justify-between items-start mb-6">
-                  <FaFlask className="text-3xl text-white" />
-                  <div className="bg-white bg-opacity-20 px-3 py-1 rounded-full text-xs font-semibold">Common</div>
+            <div className="group relative overflow-hidden rounded-xl shadow-lg backdrop-blur-lg transform transition-all duration-300 hover:scale-105">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 via-green-400 to-teal-300 opacity-90 group-hover:opacity-95 transition-opacity"></div>
+              <div className="absolute inset-0 bg-black opacity-10 group-hover:opacity-0 transition-opacity"></div>
+              <div className="relative p-8 flex flex-col h-full">
+                <div className="flex justify-between items-start mb-8">
+                  <div className="bg-white bg-opacity-20 p-4 rounded-2xl backdrop-blur-md">
+                    <FaFlask className="text-4xl text-white transform group-hover:rotate-12 transition-transform" />
+                  </div>
+                  <div className="bg-white bg-opacity-25 px-4 py-2 rounded-full text-sm font-semibold backdrop-blur-sm">
+                    Most Popular
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold mb-4 text-white" style={{ fontFamily: 'Satoshi' }}>Blood Sugar Test</h3>
-                <p className="text-white text-opacity-90 mb-auto">
-                  Monitor your glucose levels to help manage and prevent diabetes.
+                <h3 className="text-3xl font-bold mb-4 text-white group-hover:text-yellow-50 transition-colors" 
+                    style={{ fontFamily: 'Satoshi', textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                  Blood Sugar Test
+                </h3>
+                <p className="text-white text-opacity-90 mb-auto text-lg leading-relaxed">
+                  Monitor your glucose levels with our state-of-the-art testing facilities. 
+                  Get accurate results and instant digital reports.
                 </p>
-                <div className="mt-6 pt-4 border-t border-white border-opacity-30">
+                <div className="mt-8 pt-6 border-t border-white border-opacity-20">
                   <button 
-                    className="px-4 py-2 bg-white text-green-700 rounded-md hover:bg-green-50 transition-colors w-full"
+                    className="px-6 py-3 bg-white bg-opacity-95 text-green-700 rounded-xl font-semibold 
+                             hover:bg-opacity-100 hover:shadow-lg transition-all duration-300 w-full 
+                             flex items-center justify-center space-x-2 group"
                     onClick={() => navigate('/login')}
                   >
-                    Learn More
+                    <span>Schedule Test</span>
+                    <FaArrowRight className="transform group-hover:translate-x-1 transition-transform" />
                   </button>
                 </div>
               </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-10 transition-opacity"></div>
             </div>
 
             {/* Additional Tests Card */}

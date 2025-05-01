@@ -3,12 +3,14 @@ import {
   FaUser, FaChevronDown, FaHome, FaChartBar, FaFileAlt, 
   FaHeartbeat, FaFlask, FaCalendarCheck, FaClipboardList,
   FaExclamationCircle, FaCheckCircle, FaCamera, FaCopy,
-  FaPrescription, FaArrowRight
+  FaPrescription, FaArrowRight, FaUserMd, FaBell, FaShieldAlt, 
+  FaSlidersH, FaMapMarkerAlt, FaRegClock
 } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import userImage from './../assets/user.png';
 import { Menu, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import axios from 'axios';
 
 const UserDashboard = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -34,6 +36,7 @@ const UserDashboard = () => {
   
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [appointments, setAppointments] = useState([]);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -41,6 +44,22 @@ const UserDashboard = () => {
       setIsLoggedIn(true);
       setUserName(user.name);
     }
+  }, []);
+
+  useEffect(() => {
+    // Fetch appointments
+    const fetchAppointments = async () => {
+      try {
+        const response = await axios.get('http://localhost:4000/user/appointments', {
+          withCredentials: true
+        });
+        setAppointments(response.data);
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+      }
+    };
+
+    fetchAppointments();
   }, []);
 
   const handleLogout = () => {
@@ -66,6 +85,45 @@ const UserDashboard = () => {
       alert('Please select a prescription image to scan');
     }
   };
+
+  const renderAppointments = () => (
+    <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold text-gray-800">Upcoming Appointments</h2>
+        <button
+          onClick={() => navigate('/book-appointment')}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+        >
+          Book New Test
+        </button>
+      </div>
+      {appointments.length === 0 ? (
+        <p className="text-gray-500">No upcoming appointments</p>
+      ) : (
+        <div className="space-y-4">
+          {appointments.map(apt => (
+            <div key={apt._id} className="border-l-4 border-indigo-500 pl-4 py-2">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold">{apt.testId.name}</h3>
+                  <p className="text-sm text-gray-600">
+                    {new Date(apt.appointmentDate).toLocaleDateString()} at {apt.timeSlot}
+                  </p>
+                </div>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  apt.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                  apt.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {apt.status.charAt(0).toUpperCase() + apt.status.slice(1)}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-100" style={{ fontFamily: 'Satoshi' }}>
@@ -358,34 +416,10 @@ const UserDashboard = () => {
 
           {/* Side Panels */}
           <div>
-            {/* Next Appointment */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Next Appointment</h2>
-              <div className="bg-indigo-50 p-4 rounded-lg mb-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm text-gray-500">Date</p>
-                    <p className="font-semibold">{metrics.nextAppointment}</p>
-                  </div>
-                  <div>
-                    <FaCalendarCheck className="text-indigo-600 text-2xl" />
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <p className="text-sm text-gray-500">Test Type</p>
-                  <p className="font-semibold">Annual Health Checkup</p>
-                </div>
-              </div>
-              <div className="flex space-x-2">
-                <button className="bg-indigo-600 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-indigo-700 flex-grow">
-                  Reschedule
-                </button>
-                <button className="border border-indigo-600 text-indigo-600 text-sm font-medium px-4 py-2 rounded-md hover:bg-indigo-50">
-                  Cancel
-                </button>
-              </div>
-            </div>
+            {/* Upcoming Appointments */}
+            {renderAppointments()}
 
+            
             {/* Health Tips */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-4">Health Tips</h2>

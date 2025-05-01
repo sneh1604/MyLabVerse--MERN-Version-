@@ -15,7 +15,8 @@ import {
   FaCogs,
   FaEnvelopeOpenText,
   FaChartPie,
-  FaCheckCircle
+  FaCheckCircle,
+  FaCalendar
 } from "react-icons/fa";
 
 const Dashboard = () => {
@@ -119,6 +120,12 @@ const Dashboard = () => {
               onClick={() => navigate("/make-report")}
             >
               <FaFlask className="mr-3" /> Make Report
+            </li>
+            <li
+              className="py-2 px-4 flex items-center hover:bg-gray-700 cursor-pointer"
+              onClick={() => navigate("/staff-appointments")}
+            >
+              <FaCalendar className="mr-3" /> Appointments
             </li>
             <li
               className="py-2 px-4 flex items-center hover:bg-gray-700 cursor-pointer"

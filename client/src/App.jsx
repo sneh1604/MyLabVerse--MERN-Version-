@@ -26,6 +26,9 @@ import InitialAdminSetup from "./components/InitialAdminSetup";
 import SingleHemogramReport from "./components/SingleHemogramReport"; // You'll need to create this component
 import BulkUpload from './components/BulkUpload';
 import ForgotPassword from './components/ForgotPassword'; // Import the ForgotPassword component
+import BookAppointment from './components/BookAppointment';
+import AppointmentManager from './components/AppointmentManager';
+import StaffAppointments from './components/StaffAppointments';
 
 export default function App() {
   return (
@@ -61,6 +64,13 @@ export default function App() {
           <Route path="/administrator-register" element={<AdministratorRegister />} />
           <Route path="/initial-admin-setup" element={<InitialAdminSetup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+
+          {/* Appointment routes */}
+          <Route path="/book-appointment" element={<BookAppointment />} />
+          <Route path="/appointment-manager" element={<AppointmentManager />} />
+          <Route path="/staff-appointments" element={<StaffAppointments />} />
+
+          {/* Add more routes as needed */}
         </Routes>
       </BrowserRouter>
     </div>

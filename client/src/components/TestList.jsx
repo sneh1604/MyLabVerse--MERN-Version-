@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaTrash, FaBars, FaTachometerAlt, FaUsers, FaFileAlt, FaUserCircle, FaFlask, FaSearch, FaThList, FaTh, FaSort, FaFilter, FaToggleOn, FaToggleOff } from 'react-icons/fa';
+import { FaTrash, FaBars, FaTachometerAlt, FaUsers, FaFileAlt, FaUserCircle, FaFlask, FaSearch, FaThList, FaTh, FaSort, FaFilter, FaToggleOn, FaToggleOff , FaArrowRight , FaCalendar , FaCogs, FaPlus } from 'react-icons/fa';
 
 export default function TestList() {
     const [tests, setTests] = useState([]);
@@ -89,31 +89,60 @@ export default function TestList() {
     return (
         <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             {/* Sidebar */}
-            <aside className={`bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0`}>
-                <div className="flex items-center justify-between px-4">
-                    <h1 className="text-2xl font-bold">MyLabVerse</h1>
-                    <FaBars className="lg:hidden cursor-pointer text-2xl" onClick={() => setSidebarOpen(!sidebarOpen)} />
-                </div>
-                <nav>
-                <ul>
-            <li className="py-2 px-4 flex items-center hover:bg-gray-700 cursor-pointer" onClick={() => navigate("/dashboard")}>
-              <FaTachometerAlt className="mr-3" /> Dashboard
-            </li>
-            <li className="py-2 px-4 flex items-center hover:bg-gray-700 cursor-pointer" onClick={() => navigate("/registered-users")}>
-              <FaUsers className="mr-3" /> Registered Users
-            </li>
-            <li className="py-2 px-4 flex items-center hover:bg-gray-700 cursor-pointer" onClick={() => navigate("/test-list")}>
-              <FaFileAlt className="mr-3" /> TestLists
-            </li>
-            <li
-              className="py-2 px-4 flex items-center hover:bg-gray-700 cursor-pointer"
-              onClick={() => navigate("/make-report")}
-            >
-              <FaFlask className="mr-3" /> Make Report
-            </li>
-          </ul>
-                </nav>
-            </aside>
+            <aside
+                          className={`bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform ${
+                            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+                          } transition duration-200 ease-in-out lg:relative lg:translate-x-0`}
+                        >
+                          <div className="flex items-center justify-between px-4">
+                            <h1 className="text-2xl font-bold">MyLabVerse</h1>
+                            <FaBars
+                              className="lg:hidden cursor-pointer text-2xl"
+                              onClick={() => setSidebarOpen(!sidebarOpen)}
+                            />
+                          </div>
+                          <nav>
+                            <ul>
+                              <li
+                                className="py-2 px-4 flex items-center hover:bg-gray-700 cursor-pointer"
+                                onClick={() => navigate("/dashboard")}
+                              >
+                                <FaTachometerAlt className="mr-3" /> Dashboard
+                              </li>
+                              <li
+                                className="py-2 px-4 flex items-center hover:bg-gray-700 cursor-pointer"
+                                onClick={() => navigate("/registered-users")}
+                              >
+                                <FaUsers className="mr-3" /> Registered Users
+                              </li>
+                              <li
+                                className="py-2 px-4 flex items-center hover:bg-gray-700 cursor-pointer"
+                                onClick={() => navigate("/test-list")}
+                              >
+                                <FaFileAlt className="mr-3" /> Test Lists
+                              </li>
+                              <li
+                                className="py-2 px-4 flex items-center hover:bg-gray-700 cursor-pointer"
+                                onClick={() => navigate("/make-report")}
+                              >
+                                <FaFlask className="mr-3" /> Make Report
+                              </li>
+                              <li
+                                className="py-2 px-4 flex items-center hover:bg-gray-700 cursor-pointer"
+                                onClick={() => navigate("/staff-appointments")}
+                              >
+                                <FaCalendar className="mr-3" /> Appointments
+                              </li>
+                              <li
+                                className="py-2 px-4 flex items-center hover:bg-gray-700 cursor-pointer"
+                                onClick={() => navigate("/settings")}
+                              >
+                                <FaCogs className="mr-3" /> Settings
+                              </li>
+                            </ul>
+                          </nav>
+                        </aside>
+                  
 
             {/* Main content */}
             <div className="flex-1 flex flex-col">
