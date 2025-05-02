@@ -1,151 +1,144 @@
-# MERN-Stack Authentication and Authorization in Login and Signup
+# MyLabVerse - Laboratory Management System
 
 ## Project Overview
 
-This project is a full-stack application built using the MERN stack (MongoDB, Express, React, Node.js) that demonstrates authentication and authorization functionalities in a login and signup system. The application includes features such as user registration, login, and access control to certain parts of the application based on user roles. Only admin users can access the dashboard, while regular users have restricted access.
+MyLabVerse is a comprehensive laboratory management system built using the MERN stack (MongoDB, Express.js, React.js, Node.js). It provides a robust platform for managing laboratory operations, test reports, appointments, and staff activities with secure authentication and role-based access control.
 
-## Project Structure
+## Core Features
 
-- **Backend**: Node.js, Express, MongoDB
-- **Frontend**: React.js
+### 1. Authentication & Authorization
+- Secure user registration and login
+- Role-based access control (Administrator, Staff, Patients)
+- JWT-based authentication with cookie management
+- Firebase authentication integration
 
-## Features
+### 2. Report Management
+- Hemogram Reports
+- Lipid Reports
+- Blood Sugar Reports
+- Detailed test listings and results
 
-- User Registration
-- User Login
-- Password Encryption
-- JWT Authentication
-- Role-Based Authorization
-- Protected Routes
+### 3. Administrative Features
+- Staff activity monitoring
+- Performance metrics tracking
+- Administrator dashboard
+- User management
+
+### 4. Appointment System
+- Patient appointment scheduling
+- Appointment tracking
+- Status management
+
+## Technical Architecture
+
+### Backend Components
+- **Server**: Express.js
+- **Database**: MongoDB with Mongoose ODM
+- **Authentication**: JWT + Firebase Auth
+- **Security**: bcryptjs for password hashing
+- **Environment**: dotenv for configuration
+
+### Models Structure
+- User Model
+- TestList Model
+- Report Models:
+  - Hemogram Report
+  - Lipid Report
+  - Blood Sugar Report
+- Administrator Model
+- StaffActivity Model
+- PerformanceMetrics Model
+- Appointment Model
+
+## API Endpoints
+
+### Authentication
+- `POST /register` - User registration
+- `POST /login` - User authentication
+- `GET /dashboard` - Protected admin dashboard access
+
+### Reports
+- Endpoints for managing different types of reports
+- CRUD operations for test results
+- Report generation and retrieval
+
+### Administrative
+- Staff activity tracking
+- Performance monitoring
+- User management operations
 
 ## Getting Started
 
 ### Prerequisites
-
-Before you begin, ensure you have the following installed on your local machine:
-
-- Node.js
-- npm (Node Package Manager)
+- Node.js (v14 or higher)
 - MongoDB
+- npm or yarn
+- Firebase project credentials
 
 ### Installation
 
-1. **Clone the repository**:
-   ```sh
-   git clone https://github.com/haileamlakwalelige/MERN-Stack-authentication-and-authorization-in-login-and-signup.git
-   cd MERN-Stack-authentication-and-authorization-in-login-and-signup
-   ```
+1. **Clone the Repository**
+```sh
+git clone <repository-url>
+cd MyLabVerse
+```
 
-2. **Install backend dependencies**:
-   ```sh
-   cd server
-   npm install
-   ```
+2. **Environment Setup**
+```sh
+# Create .env file in server directory
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+FIREBASE_CONFIG=your_firebase_config
+```
 
-3. **Install frontend dependencies**:
-   ```sh
-   cd client
-   npm install
-   ```
+3. **Install Dependencies**
+```sh
+# Backend dependencies
+cd server
+npm install
 
-### Configuration
-
-1. **MongoDB Connection**:
-   Ensure MongoDB is running. The backend will connect to MongoDB using the URL `MONGO_URI.
-
-2. **JWT Secret**:
-   Ensure you have a secret key for JWT. In the code, it is set as `'jwt-secret-key'`.
+# Frontend dependencies
+cd ../client
+npm install
+```
 
 ### Running the Application
 
-1. **Start the Backend**:
-   ```sh
-   cd server
-   npm run dev
-   ```
-   The backend server will run on `http://localhost:4000`.
+1. **Start Backend Server**
+```sh
+cd server
+npm run dev
+# Server runs on http://localhost:4000
+```
 
-2. **Start the Frontend**:
-   ```sh
-   cd client
-   npm run dev
-   ```
-   The frontend server will run on `http://localhost:5173`.
+2. **Start Frontend Application**
+```sh
+cd client
+npm run dev
+# Client runs on http://localhost:5173
+```
 
-## API Endpoints
+## Security Features
 
-### Register User
+- Password encryption using bcryptjs
+- JWT token-based authentication
+- HTTP-only cookies
+- Firebase authentication integration
+- Role-based access control
+- Request validation middleware
 
-- **URL**: `/register`
-- **Method**: POST
-- **Description**: Registers a new user.
-- **Body**: 
-  ```json
-  {
-      "name": "User Name",
-      "email": "user@example.com",
-      "password": "password123"
-  }
-  ```
+## Contributing
 
-### Login User
-
-- **URL**: `/login`
-- **Method**: POST
-- **Description**: Logs in an existing user.
-- **Body**: 
-  ```json
-  {
-      "email": "user@example.com",
-      "password": "password123"
-  }
-  ```
-
-### Access Dashboard
-
-- **URL**: `/dashboard`
-- **Method**: GET
-- **Description**: Access the admin dashboard (requires admin role).
-- **Headers**: 
-  - `Cookie`: `token=JWT_TOKEN`
-
-## Frontend Pages
-
-### Login Page
-
-- URL: `/login`
-- Description: Allows users to log in to their account.
-
-### Signup Page
-
-- URL: `/register`
-- Description: Allows new users to register an account.
-
-### Home Page
-
-- URL: `/`
-- Description: The main landing page of the application.
-
-### Dashboard Page
-
-- URL: `/dashboard`
-- Description: Accessible only to admin users. Regular users will receive an authorization error.
-
-## Middleware
-
-### verifyUser
-
-- **Description**: Middleware to verify JWT and check if the user has admin privileges.
-- **Usage**: Applied to the `/dashboard` route to restrict access to admin users only.
-
-## Conclusion
-
-This project serves as a foundational example of how to implement authentication and authorization in a MERN stack application. You can extend and customize this application to fit the specific needs of your project.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
-Feel free to contribute to this project by submitting pull requests or opening issues. Your feedback and suggestions are always welcome!
+For more information or support, please open an issue in the repository.
