@@ -8,7 +8,7 @@ const dotenv = require('dotenv');
 const { verifyFirebaseToken } = require('./middleware/firebaseAuth'); // Add this line
 
 const UserModel = require("./models/User");
-const TestListModel = require("./models/TestList");
+const TestListModel = require('./models/Testlist'); // Changed from TestList to Testlist to match actual filename
 const HemogramReportModel = require('./models/HemogramReport');
 const LipidReportModel = require('./models/LipidReport');
 const LipidReport = require('./models/LipidReport');
