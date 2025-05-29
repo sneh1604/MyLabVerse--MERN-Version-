@@ -3,6 +3,7 @@ import axios from 'axios';
 import { FaBars, FaUserCircle, FaFileAlt, FaFlask, FaTachometerAlt, FaUsers, FaInfoCircle, FaCheck } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_BASE_URL } from '../config/api-config';
 
 function HemogramReport() {
     const [clients, setClients] = useState([]);
@@ -58,7 +59,7 @@ function HemogramReport() {
     // Fetch the list of registered users (excluding admins)
     useEffect(() => {
         // Fetch client list
-        axios.get('http://localhost:4000/clients', { withCredentials: true })
+        axios.get(`${API_BASE_URL}/clients`, { withCredentials: true })
             .then(response => setClients(response.data))
             .catch(error => console.error('Error fetching clients:', error));
     }, []);
@@ -123,7 +124,7 @@ function HemogramReport() {
     const confirmSubmit = async () => {
         setLoading(true);
         try {
-            await axios.post('http://localhost:4000/hemogram-report', formData, { withCredentials: true });
+            await axios.post(`${API_BASE_URL}/hemogram-report`, formData, { withCredentials: true });
             setModalOpen(false);
             setShowSuccess(true);
             setTimeout(() => {

@@ -17,6 +17,7 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
 import { ClipLoader } from "react-spinners";
+import { API_BASE_URL } from '../config/api-config';
 
 const ViewReport = () => {
   const [reports, setReports] = useState([]);
@@ -39,15 +40,15 @@ const ViewReport = () => {
     const fetchReports = async () => {
       try {
         const hemogramResponse = await axios.get(
-          "http://localhost:4000/hemogram-reports",
+          `${API_BASE_URL}/hemogram-reports`,
           { withCredentials: true }
         );
         const lipidResponse = await axios.get(
-          "http://localhost:4000/lipid-report",
+          `${API_BASE_URL}/lipid-report`,
           { withCredentials: true }
         );
         const bloodSugarResponse = await axios.get(
-          "http://localhost:4000/blood-sugar-report",
+          `${API_BASE_URL}/blood-sugar-report`,
           { withCredentials: true }
         );
 
@@ -87,6 +88,7 @@ const ViewReport = () => {
         setReports(combinedReports);
       } catch (error) {
         setError("Failed to fetch reports");
+        console.error("Error fetching reports:", error);
       } finally {
         setIsLoading(false);
       }

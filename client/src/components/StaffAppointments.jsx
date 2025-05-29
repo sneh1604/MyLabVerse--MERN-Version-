@@ -11,6 +11,7 @@ import {
 } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, Transition } from '@headlessui/react';
+import { API_BASE_URL } from '../config/api-config';
 
 const StaffAppointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -36,7 +37,7 @@ const StaffAppointments = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:4000/staff/appointments', {
+      const response = await axios.get(`${API_BASE_URL}/staff/appointments`, {
         withCredentials: true
       });
       
@@ -61,7 +62,7 @@ const StaffAppointments = () => {
   const updateStatus = async (appointmentId, newStatus) => {
     try {
       await axios.patch(
-        `http://localhost:4000/appointments/${appointmentId}`,
+        `${API_BASE_URL}/appointments/${appointmentId}`,
         { status: newStatus },
         { withCredentials: true }
       );

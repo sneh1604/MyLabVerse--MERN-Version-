@@ -1,8 +1,8 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from '../config/api-config';
 import { FaBars, FaTachometerAlt, FaUsers, FaFileAlt, FaUserCircle, FaFlask, FaSearch, FaThList, FaTh , FaSort, FaFilter, FaToggleOn, FaToggleOff , FaArrowRight , FaCalendar , FaCogs } from "react-icons/fa";
+import { API_BASE_URL } from '../config/api-config';
 
 export default function RegisteredUsers() {
   const [users, setUsers] = useState([]);

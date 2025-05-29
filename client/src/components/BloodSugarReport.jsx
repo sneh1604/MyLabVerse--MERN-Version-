@@ -3,6 +3,7 @@ import axios from 'axios';
 import { FaBars, FaUserCircle, FaFileAlt, FaFlask, FaTachometerAlt, FaUsers, FaCheck, FaInfoCircle } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { API_BASE_URL } from '../config/api-config';
 
 function BloodSugarReport() {
     const [clients, setClients] = useState([]);
@@ -59,7 +60,7 @@ function BloodSugarReport() {
 
     // Fetch the list of registered users (excluding admins)
     useEffect(() => {
-        axios.get('http://localhost:4000/registered-users', { withCredentials: true })
+        axios.get(`${API_BASE_URL}/registered-users`, { withCredentials: true })
             .then(response => {
                 const nonAdminClients = response.data.filter(user => user.role !== 'admin');
                 setClients(nonAdminClients);
@@ -135,7 +136,7 @@ function BloodSugarReport() {
 
     const confirmSubmit = () => {
         setLoading(true);
-        axios.post('http://localhost:4000/blood-sugar-report', formData, { withCredentials: true })
+        axios.post(`${API_BASE_URL}/blood-sugar-report`, formData, { withCredentials: true })
             .then(response => {
                 setFormData({
                     clientName: '',

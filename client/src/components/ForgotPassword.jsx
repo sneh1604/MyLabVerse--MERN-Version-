@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaEnvelope, FaLock, FaArrowLeft } from 'react-icons/fa';
-import { API_BASE_URL } from '../config/api-config'; // Import API base URL
+import { API_BASE_URL } from '../config/api-config';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');

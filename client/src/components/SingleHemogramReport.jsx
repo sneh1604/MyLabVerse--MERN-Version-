@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { FaArrowLeft, FaDownload, FaPrint } from 'react-icons/fa';
+import { API_BASE_URL } from '../config/api-config';
 
 const SingleHemogramReport = () => {
   const [report, setReport] = useState(null);
@@ -19,7 +20,7 @@ const SingleHemogramReport = () => {
           setUserName(user.name);
         }
         
-        const response = await axios.get(`http://localhost:4000/hemogram-report/${id}`, {
+        const response = await axios.get(`${API_BASE_URL}/hemogram-report/${id}`, {
           withCredentials: true
         });
         

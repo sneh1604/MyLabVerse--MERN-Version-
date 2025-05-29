@@ -4,6 +4,8 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import axios from 'axios';
 import { FaDownload, FaArrowLeft, FaHeartbeat, FaPrint, FaFileExport } from 'react-icons/fa';
+import { API_BASE_URL } from '../config/api-config';
+
 
 const LipidPdf = () => {
   const { state } = useLocation();
@@ -15,7 +17,7 @@ const LipidPdf = () => {
   const fetchSummary = (rep) => {
     setIsLoading(true);
     axios
-      .post("http://localhost:4000/aiml", { report: rep }, {
+      .post(`${API_BASE_URL}/aiml`, { report: rep }, {
         withCredentials: true,
       })
       .then((response) => {

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import loginImage from './../assets/22.png'; // Ensure to have this image in your assets folder
-import { API_BASE_URL } from '../config/api-config'; // Import the API base URL
+import loginImage from './../assets/22.png'; 
+import { API_BASE_URL } from '../config/api-config';
 
 const SignUp = () => {
     const [name, setName]=useState("");
@@ -12,20 +12,18 @@ const SignUp = () => {
     const [error, setError]=useState("");
     const navigate = useNavigate();
 
-
-
-const handleSubmit=(e)=>{
-    e.preventDefault();
-    axios.post(`${API_BASE_URL}/register`, {name, email, password})
-    .then(res =>{
-        console.log("Response", res)
-        navigate("/login")
-        setStatus("SuccessFully Registered!")
-    }).catch(err => {
-        console.log(err)
-        setError("Error in Registering!")
-    })
-}
+    const handleSubmit=(e)=>{
+        e.preventDefault();
+        axios.post(`${API_BASE_URL}/register`, {name, email, password})
+        .then(res =>{
+            console.log("Response", res)
+            navigate("/login")
+            setStatus("SuccessFully Registered!")
+        }).catch(err => {
+            console.log(err)
+            setError("Error in Registering!")
+        })
+    }
     
   return (
     <div className='flex justify-center items-center min-h-screen bg-gradient-to-r from-blue-900 to-purple-800' style={{ fontFamily: 'Satoshi' }} >

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaCalendar, FaCheck, FaTimes } from 'react-icons/fa';
-import { API_BASE_URL } from '../config/api-config'; // Import API base URL
+import { API_BASE_URL } from '../config/api-config';
 
 const BookAppointment = () => {
   const [tests, setTests] = useState([]);

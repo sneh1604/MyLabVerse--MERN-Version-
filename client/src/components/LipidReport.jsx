@@ -3,6 +3,8 @@ import axios from 'axios';
 import { FaBars, FaUserCircle, FaFileAlt, FaFlask, FaTachometerAlt, FaUsers, FaInfoCircle, FaCheck } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_BASE_URL } from '../config/api-config';
+
 
 function LipidReport() {
     const [clients, setClients] = useState([]);
@@ -68,7 +70,7 @@ function LipidReport() {
 
     // Fetch the list of registered users (excluding admins)
     useEffect(() => {
-        axios.get('http://localhost:4000/registered-users', { withCredentials: true })
+        axios.get(`${API_BASE_URL}/registered-users`, { withCredentials: true })
             .then(response => {
                 const nonAdminClients = response.data.filter(user => user.role !== 'admin');
                 setClients(nonAdminClients);
