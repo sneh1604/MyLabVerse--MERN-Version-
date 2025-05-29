@@ -34,7 +34,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(express.json());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: [process.env.CORS_ORIGIN, 'https://mylabverse-app.vercel.app/'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -150,8 +150,8 @@ app.post("/login", async (req, res) => {
 
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            secure: true, // Set to true for HTTPS
+            sameSite: 'none', // Required for cross-domain cookies
             maxAge: 24 * 60 * 60 * 1000
         });
 
@@ -1128,8 +1128,8 @@ app.post('/api/auth/google', verifyFirebaseToken, async (req, res) => {
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true, // Set to true for HTTPS
+      sameSite: 'none', // Required for cross-domain cookies
       maxAge: 24 * 60 * 60 * 1000
     });
 
