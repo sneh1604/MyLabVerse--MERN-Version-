@@ -8,7 +8,7 @@ import TestList from "./components/TestList";
 import MakeReport from "./components/MakeReport";
 import ViewReport from "./components/ViewReport";
 import LogoutButton from "./components/Logout";
-import Reports from "./components/reports";
+import Reports from "./components/Reports";
 import Graph from "./components/Graph";
 import LipidReport from "./components/LipidReport";
 import BloodSugarReport from "./components/BloodSugarReport";
