@@ -2,6 +2,13 @@ const admin = require('../config/firebase-admin');
 
 const verifyFirebaseToken = async (req, res, next) => {
   try {
+    // If Firebase admin isn't initialized, skip verification
+    if (!admin) {
+      console.warn('Firebase admin not initialized, skipping authentication');
+      req.user = { email: 'unauthorized@example.com', name: 'Unauthorized' };
+      return next();
+    }
+
     console.log('Headers:', req.headers);
     const authHeader = req.headers.authorization;
     

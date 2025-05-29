@@ -1,3 +1,16 @@
-# ...existing entries...
+# Environment files
 .env
-firebase-service-account.json
+.env.local
+.env.development
+.env.production
+
+# Build directories
+dist/
+build/
+node_modules/
+
+# Logs
+*.log
+
+# Firebase
+server/config/firebase-service-account.json

@@ -913,14 +913,7 @@ const AdministratorDashboard = () => {
             >
               <FaChartBar className="mr-3" /> Analytics
             </li>
-            <li
-              className={`py-2 px-4 flex items-center cursor-pointer ${
-                activeTab === 'appointments' ? 'bg-indigo-800' : 'hover:bg-indigo-800'
-              }`}
-              onClick={() => setActiveTab('appointments')}
-            >
-              <FaCalendar className="mr-3" /> Appointments
-            </li>
+          
             <li
               className="py-2 px-4 flex items-center text-red-300 hover:bg-indigo-800 cursor-pointer mt-8"
               onClick={handleLogout}

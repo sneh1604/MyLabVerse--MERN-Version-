@@ -22,7 +22,7 @@ dotenv.config();
 const app = express();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const genAI = new GoogleGenerativeAI("AIzaSyAr7rZzlbvBfhKa9fFekY4-LIFW4J2fILQ");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 const ProfileModel = require('./models/Profile');
@@ -34,7 +34,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(express.json());
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -95,7 +95,7 @@ const verifyUser = (req, res, next) => {
         return res.status(403).json("Token is missing");
     }
     
-    jwt.verify(token, 'wfiefcwmim', (err, decoded) => {
+    jwt.verify(token, process.env.JWT_SECRET || 'wfiefcwmim', (err, decoded) => {
         if (err) {
             return res.status(403).json("Error with token");
         }
@@ -110,7 +110,7 @@ const verifyAdministrator = (req, res, next) => {
     if (!token) {
         return res.status(403).json("Token is missing");
     } else {
-        jwt.verify(token, 'wfiefcwmim', (err, decoded) => {
+        jwt.verify(token, process.env.JWT_SECRET || 'wfiefcwmim', (err, decoded) => {
             if (err) {
                 return res.status(403).json("Error with token");
             } else {
@@ -144,7 +144,7 @@ app.post("/login", async (req, res) => {
 
         const token = jwt.sign(
             { id: user._id, email: user.email, role: user.role },
-            'wfiefcwmim',
+            process.env.JWT_SECRET || 'wfiefcwmim',
             { expiresIn: '1d' }
         );
 
@@ -177,7 +177,7 @@ app.post("/administrator/login", (req, res) => {
                     if (response) {
                         const token = jwt.sign(
                             { email: admin.email, role: admin.role, id: admin._id }, 
-                            "wfiefcwmim", 
+                            process.env.JWT_SECRET || "wfiefcwmim", 
                             { expiresIn: '1d' }
                         );
                         res.cookie('token', token);
@@ -603,7 +603,7 @@ app.get('/is-logged-in', (req, res) => {
         return res.json({ loggedIn: false });
     }
 
-    jwt.verify(token, 'wfiefcwmim', (err, decoded) => {
+    jwt.verify(token, process.env.JWT_SECRET || 'wfiefcwmim', (err, decoded) => {
         if (err) {
             return res.json({ loggedIn: false });
         }
@@ -1122,7 +1122,7 @@ app.post('/api/auth/google', verifyFirebaseToken, async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role },
-      'wfiefcwmim',
+      process.env.JWT_SECRET || 'wfiefcwmim',
       { expiresIn: '1d' }
     );
 
@@ -1372,6 +1372,6 @@ app.use((err, req, res, next) => {
     }
 });
 
-app.listen(4000, () => {
-    console.log("Server is Running");
+app.listen(process.env.PORT || 4000, () => {
+    console.log(`Server is Running on port ${process.env.PORT || 4000}`);
 });

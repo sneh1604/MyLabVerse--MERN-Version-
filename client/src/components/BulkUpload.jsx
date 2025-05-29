@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import axiosInstance from '../config/axios';
 import { 
     FaUpload, FaFileExcel, FaCheck, FaTimes, FaInfoCircle, 
     FaDownload, FaSpinner, FaBars, FaUserCircle 
@@ -145,26 +146,14 @@ const BulkUpload = () => {
     };
 
     const downloadTemplate = async (type) => {
-        if (!type) {
-            setError('Please select a report type first');
-            return;
-        }
-        
         try {
-            const template = reportTypes[type].template;
-            const response = await fetch(`http://localhost:4000/templates/${template}`, {
-                credentials: 'include'
-            });
+            const response = await axiosInstance.get(`/templates/${reportTypes[type].template}`);
             
-            if (!response.ok) {
-                throw new Error('Template download failed');
-            }
-            
-            const blob = await response.blob();
+            const blob = await response.data.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = template;
+            a.download = reportTypes[type].template;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
@@ -186,11 +175,10 @@ const BulkUpload = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.post(
-                `http://localhost:4000/bulk-upload/${reportType}`,
+            const response = await axiosInstance.post(
+                `/bulk-upload/${reportType}`,
                 formData,
                 {
-                    withCredentials: true,
                     headers: { 'Content-Type': 'multipart/form-data' }
                 }
             );
