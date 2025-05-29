@@ -85,7 +85,3 @@ const Reports = () => {
 };
 
 export default Reports;
-
-// This is a placeholder file that re-exports the Reports component
-import Reports from './Reports';
-export default Reports;
