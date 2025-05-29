@@ -142,3 +142,18 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ---
 
 For more information or support, please open an issue in the repository.
+
+# MyLabVerse Deployment
+
+1. Clone repository
+2. Follow setup in DEPLOYMENT_GUIDE.md
+3. Create required accounts:
+   - MongoDB Atlas (database)
+   - Render.com (backend)
+   - Vercel/Netlify (frontend)
+4. Set environment variables
+5. Deploy in order:
+   - Database
+   - Backend
+   - Frontend
+6. Verify all functionality
