@@ -126,6 +126,8 @@ npm run dev
 - Firebase authentication integration
 - Role-based access control
 - Request validation middleware
+  
+[MyLabVerse API Endpoints Documentation.docx](https://github.com/user-attachments/files/20238542/MyLabVerse.API.Endpoints.Documentation.docx)
 
 ## Contributing
 
@@ -142,6 +144,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ---
 
 For more information or support, please open an issue in the repository.
+
 
 # MyLabVerse Deployment
 
