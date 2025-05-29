@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaArrowLeft } from 'react-icons/fa';
+import { API_BASE_URL } from '../config/api-config'; // Import API base URL
 
 const AdministratorRegister = () => {
   const [formData, setFormData] = useState({
@@ -33,7 +34,7 @@ const AdministratorRegister = () => {
   const checkInitialSetup = async () => {
     try {
       // Check if there are any administrators in the system
-      const response = await axios.get('http://localhost:4000/check-admin-exists');
+      const response = await axios.get(`${API_BASE_URL}/check-admin-exists`);
       
       if (response.data.exists) {
         // If admins exist, redirect to login since only existing admins can create new ones
@@ -82,11 +83,11 @@ const AdministratorRegister = () => {
     }
     
     try {
-      let endpoint = 'http://localhost:4000/administrator/register';
+      let endpoint = `${API_BASE_URL}/administrator/register`;
       
       // If no admin exists, use the initial setup endpoint
       if (!(JSON.parse(localStorage.getItem('administrator')))) {
-        endpoint = 'http://localhost:4000/initial-administrator-setup';
+        endpoint = `${API_BASE_URL}/initial-administrator-setup`;
       }
       
       const response = await axios.post(endpoint, {

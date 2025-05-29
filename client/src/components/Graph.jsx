@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Line, Bar } from "react-chartjs-2";
+import axios from "axios";
+import { API_BASE_URL } from '../config/api-config'; // Import API base URL
 import {
   FaDownload,
   FaUser,
@@ -8,9 +10,9 @@ import {
   FaChartBar,
   FaFileAlt,
 } from "react-icons/fa";
-import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
 import { Fragment } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 import {
   Chart as ChartJS,
@@ -23,7 +25,6 @@ import {
   Legend,
   PointElement,
 } from "chart.js";
-import { Link, useNavigate } from "react-router-dom";
 
 // Register Chart.js components
 ChartJS.register(
@@ -58,14 +59,14 @@ const HemogramChart = () => {
     const fetchData = async () => {
       try {
         const hemogramResponse = await axios.get(
-          "http://localhost:4000/hemogram-graph",
+          `${API_BASE_URL}/hemogram-graph`,
           { withCredentials: true }
         );
         setGraphData(hemogramResponse.data.graphData);
         setNormalRanges(hemogramResponse.data.normalRanges);
 
         const bloodSugarResponse = await axios.get(
-          "http://localhost:4000/blood-sugar-graph",
+          `${API_BASE_URL}/blood-sugar-graph`,
           { withCredentials: true }
         );
         setBloodSugarData(bloodSugarResponse.data);

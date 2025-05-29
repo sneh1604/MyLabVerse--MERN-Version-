@@ -5,6 +5,7 @@ import { auth } from '../config/firebase';
 import axios from 'axios';
 import loginImage from './../assets/22.png';
 import { FaGoogle, FaEnvelope, FaLock } from 'react-icons/fa';
+import { API_BASE_URL } from '../config/api-config'; // Import the API base URL
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -46,7 +47,7 @@ const Login = () => {
 
       setStatus("Logging in...");
       
-      const response = await axios.post('http://localhost:4000/login', { 
+      const response = await axios.post(`${API_BASE_URL}/login`, { 
         email, 
         password 
       });
@@ -83,8 +84,9 @@ const Login = () => {
       const result = await signInWithPopup(auth, provider);
       const idToken = await result.user.getIdToken();
       
+      // Use the API_BASE_URL here
       const response = await axios.post(
-        'http://localhost:4000/api/auth/google',
+        `${API_BASE_URL}/api/auth/google`,
         {},
         {
           headers: { 
@@ -108,16 +110,24 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Google login error:', error);
-      setError(error.response?.data?.error || error.message || "Google login failed");
+      
+      // Show more detailed error for network issues
+      if (error.code === 'ERR_NETWORK') {
+        setError(`Network error: Cannot connect to the backend server. Please make sure the server is running at ${API_BASE_URL}`);
+      } else if (error.code === 'auth/unauthorized-domain') {
+        setError("Authentication domain not authorized. Please add this domain to your Firebase authorized domains.");
+      } else {
+        setError(error.response?.data?.error || error.message || "Google login failed");
+      }
     }
   };
 
-  // Add this function at the top of your component for testing
+  // Update the test function too
   const testAuth = async () => {
     try {
       // Test traditional login
       console.log("Testing traditional login...");
-      const traditionalLogin = await axios.post('http://localhost:4000/login', {
+      const traditionalLogin = await axios.post(`${API_BASE_URL}/login`, {
         email: "test@test.com",
         password: "test123"
       });
@@ -130,11 +140,10 @@ const Login = () => {
       const idToken = await result.user.getIdToken();
       
       console.log("Google auth successful, testing backend...");
-      const googleLogin = await axios.post('http://localhost:4000/api/auth/google', {}, {
+      const googleLogin = await axios.post(`${API_BASE_URL}/api/auth/google`, {}, {
         headers: { Authorization: `Bearer ${idToken}` }
       });
       console.log("Google login response:", googleLogin.data);
-
     } catch (error) {
       console.error("Auth test failed:", error);
     }

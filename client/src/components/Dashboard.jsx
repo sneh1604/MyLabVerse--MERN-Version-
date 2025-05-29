@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE_URL } from '../config/api-config';
 import {
   FaBars,
   FaTachometerAlt,
@@ -36,7 +37,7 @@ const Dashboard = () => {
         const user = JSON.parse(localStorage.getItem('user'));
         const token = user?.token;
         
-        const response = await axios.get('http://localhost:4000/dashboard', {
+        const response = await axios.get(`${API_BASE_URL}/dashboard`, {
           headers: {
             Authorization: `Bearer ${token}`
           },
@@ -62,7 +63,7 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://localhost:4000/admin-logout', {}, { withCredentials: true });
+      await axios.post(`${API_BASE_URL}/admin-logout`, {}, { withCredentials: true });
       localStorage.removeItem('user');
       setIsLoggedIn(false);
       setUserName('');

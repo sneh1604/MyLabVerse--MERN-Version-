@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import loginImage from './../assets/22.png'; 
+import loginImage from './../assets/22.png';
+import { API_BASE_URL } from '../config/api-config'; // Import API base URL
 
 const AdministratorLogin = () => {
   const [email, setEmail] = useState("");
@@ -14,7 +15,7 @@ const AdministratorLogin = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    axios.post('http://localhost:4000/administrator/login', { email, password })
+    axios.post(`${API_BASE_URL}/administrator/login`, { email, password })
       .then(res => {
         if (res.data.Status === "Success") {
           const userData = {

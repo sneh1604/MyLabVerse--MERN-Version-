@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api-config'; // Import API base URL
 import {
   FaBars, FaTachometerAlt, FaUsers, FaChartBar, FaUserTie, FaSignOutAlt, 
   FaUserCircle, FaClipboardList, FaFlask, FaCog, FaCalendarAlt, FaUpload,
@@ -69,7 +70,7 @@ const AdministratorDashboard = () => {
   const fetchLabStatistics = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:4000/administrator/lab-statistics', { 
+      const response = await axios.get(`${API_BASE_URL}/administrator/lab-statistics`, { 
         withCredentials: true 
       });
       setLabStatistics(response.data);
@@ -83,7 +84,7 @@ const AdministratorDashboard = () => {
   
   const fetchStaffList = async () => {
     try {
-      const response = await axios.get('http://localhost:4000/administrator/staff', { 
+      const response = await axios.get(`${API_BASE_URL}/administrator/staff`, { 
         withCredentials: true 
       });
       setStaffList(response.data);
@@ -95,7 +96,7 @@ const AdministratorDashboard = () => {
   
   const fetchStaffPerformance = async (staffId) => {
     try {
-      const response = await axios.get(`http://localhost:4000/administrator/performance-metrics?staffId=${staffId}`, { 
+      const response = await axios.get(`${API_BASE_URL}/administrator/performance-metrics?staffId=${staffId}`, { 
         withCredentials: true 
       });
       setStaffPerformance(response.data);
@@ -107,7 +108,7 @@ const AdministratorDashboard = () => {
   
   const fetchStaffActivities = async (staffId) => {
     try {
-      const response = await axios.get(`http://localhost:4000/administrator/staff-activities?staffId=${staffId}`, { 
+      const response = await axios.get(`${API_BASE_URL}/administrator/staff-activities?staffId=${staffId}`, { 
         withCredentials: true 
       });
       setStaffActivities(response.data);
@@ -125,7 +126,7 @@ const AdministratorDashboard = () => {
   
   const handleLogout = async () => {
     try {
-      await axios.post('http://localhost:4000/logout', {}, { withCredentials: true });
+      await axios.post(`${API_BASE_URL}/logout`, {}, { withCredentials: true });
       localStorage.removeItem('administrator');
       navigate('/administrator-login');
     } catch (err) {

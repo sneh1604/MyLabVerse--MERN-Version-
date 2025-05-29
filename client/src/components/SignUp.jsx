@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import loginImage from './../assets/22.png'; // Ensure to have this image in your assets folder
+import { API_BASE_URL } from '../config/api-config'; // Import the API base URL
 
 const SignUp = () => {
     const [name, setName]=useState("");
@@ -15,7 +16,7 @@ const SignUp = () => {
 
 const handleSubmit=(e)=>{
     e.preventDefault();
-    axios.post('http://localhost:4000/register', {name, email, password})
+    axios.post(`${API_BASE_URL}/register`, {name, email, password})
     .then(res =>{
         console.log("Response", res)
         navigate("/login")

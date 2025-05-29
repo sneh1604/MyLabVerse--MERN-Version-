@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaEnvelope, FaLock, FaArrowLeft } from 'react-icons/fa';
+import { API_BASE_URL } from '../config/api-config'; // Import API base URL
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -63,7 +64,7 @@ const ForgotPassword = () => {
         return;
       }
 
-      const response = await axios.post('http://localhost:4000/forgot-password', {
+      const response = await axios.post(`${API_BASE_URL}/forgot-password`, {
         email: email.trim(),
         newPassword
       });

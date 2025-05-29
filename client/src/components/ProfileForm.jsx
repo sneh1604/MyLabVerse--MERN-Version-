@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api-config'; // Import API base URL
 import { FaUser, FaChevronDown, FaHome, FaChartBar, FaFileAlt } from 'react-icons/fa';
 import { Menu, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
@@ -37,12 +38,12 @@ const ProfileForm = () => {
     const checkProfileAndFetch = async () => {
         try {
             // First check if profile exists
-            const existsResponse = await axios.get('http://localhost:4000/profile/exists', { withCredentials: true });
+            const existsResponse = await axios.get(`${API_BASE_URL}/profile/exists`, { withCredentials: true });
             setHasProfile(existsResponse.data.exists);
 
             if (existsResponse.data.exists) {
                 // If profile exists, fetch it
-                const profileResponse = await axios.get('http://localhost:4000/profile', { withCredentials: true });
+                const profileResponse = await axios.get(`${API_BASE_URL}/profile`, { withCredentials: true });
                 if (profileResponse.data.profile) {
                     setFormData(profileResponse.data.profile);
                 }
@@ -74,7 +75,7 @@ const ProfileForm = () => {
         setSuccessMessage(null);
 
         try {
-            const response = await axios.post('http://localhost:4000/profile', formData, { withCredentials: true });
+            const response = await axios.post(`${API_BASE_URL}/profile`, formData, { withCredentials: true });
             setSuccessMessage(response.data.message);
             setHasProfile(true);
         } catch (err) {

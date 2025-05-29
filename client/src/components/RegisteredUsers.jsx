@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from '../config/api-config';
 import { FaBars, FaTachometerAlt, FaUsers, FaFileAlt, FaUserCircle, FaFlask, FaSearch, FaThList, FaTh , FaSort, FaFilter, FaToggleOn, FaToggleOff , FaArrowRight , FaCalendar , FaCogs } from "react-icons/fa";
 
 export default function RegisteredUsers() {
@@ -14,7 +15,7 @@ export default function RegisteredUsers() {
   axios.defaults.withCredentials = true;
 
   useEffect(() => {
-    axios.get("http://localhost:4000/registered-users").then((res) => {
+    axios.get(`${API_BASE_URL}/registered-users`).then((res) => {
       if (res.data) {
         setUsers(res.data);
       } else {
@@ -24,7 +25,7 @@ export default function RegisteredUsers() {
   }, [navigate]);
 
   const handleLogout = () => {
-    axios.post("http://localhost:4000/logout").then((res) => {
+    axios.post(`${API_BASE_URL}/logout`).then((res) => {
       navigate("/login");
     }).catch(err => console.log(err));
   };

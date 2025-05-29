@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaCalendar, FaCheck, FaTimes } from 'react-icons/fa';
+import { API_BASE_URL } from '../config/api-config'; // Import API base URL
 
 const BookAppointment = () => {
   const [tests, setTests] = useState([]);
@@ -32,7 +33,7 @@ const BookAppointment = () => {
       const user = JSON.parse(localStorage.getItem('user'));
       const token = user?.token;
 
-      const response = await axios.get('http://localhost:4000/test-list', {
+      const response = await axios.get(`${API_BASE_URL}/test-list`, {
         withCredentials: true,
         headers: {
           'Content-Type': 'application/json',
@@ -60,7 +61,7 @@ const BookAppointment = () => {
 
   const fetchAvailableSlots = async () => {
     try {
-      const response = await axios.get(`http://localhost:4000/available-slots?date=${selectedDate}`, {
+      const response = await axios.get(`${API_BASE_URL}/available-slots?date=${selectedDate}`, {
         withCredentials: true
       });
       setAvailableSlots(response.data);
@@ -75,7 +76,7 @@ const BookAppointment = () => {
     setError('');
 
     try {
-      await axios.post('http://localhost:4000/appointments', {
+      await axios.post(`${API_BASE_URL}/appointments`, {
         testId: selectedTest,
         appointmentDate: selectedDate,
         timeSlot: selectedSlot

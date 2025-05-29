@@ -1,10 +1,9 @@
 import axios from 'axios';
-
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+import { API_BASE_URL } from './api-config';
 
 // Ensure all API requests include credentials for cookies
 const axiosInstance = axios.create({
-  baseURL,
+  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
