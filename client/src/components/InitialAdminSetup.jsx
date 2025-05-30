@@ -49,7 +49,7 @@ const InitialAdminSetup = () => {
     }
     
     try {
-      const response = await axios.post('http://localhost:4000/initial-administrator-setup', {
+      const response = await axios.post(`${API_BASE_URL}/initial-administrator-setup`, {
         name: formData.name,
         email: formData.email,
         password: formData.password,

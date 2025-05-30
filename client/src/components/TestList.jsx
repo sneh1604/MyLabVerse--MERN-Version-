@@ -2,6 +2,8 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaTrash, FaBars, FaTachometerAlt, FaUsers, FaFileAlt, FaUserCircle, FaFlask, FaSearch, FaThList, FaTh, FaSort, FaFilter, FaToggleOn, FaToggleOff , FaArrowRight , FaCalendar , FaCogs, FaPlus } from 'react-icons/fa';
+import { API_BASE_URL } from '../config/api-config';
+
 
 export default function TestList() {
     const [tests, setTests] = useState([]);
@@ -27,13 +29,13 @@ export default function TestList() {
     axios.defaults.withCredentials = true;
 
     useEffect(() => {
-        axios.get('http://localhost:4000/test-list')
+        axios.get(`${API_BASE_URL}/test-list`)
             .then(res => setTests(res.data))
             .catch(err => console.error('Failed to fetch test list:', err));
     }, []);
 
     const handleAddTest = () => {
-        axios.post('http://localhost:4000/test-list', newTest)
+        axios.post(`${API_BASE_URL}//test-list`, newTest)
             .then(res => {
                 setTests([...tests, res.data]);
                 setNewTest({ name: '', description: '', cost: '', status: true, delete_flag: false });
@@ -42,19 +44,19 @@ export default function TestList() {
     };
 
     const handleDeleteTest = (id) => {
-        axios.delete(`http://localhost:4000/test-list/${id}`)
+        axios.delete(`${API_BASE_URL}//test-list/${id}`)
             .then(() => setTests(tests.filter(test => test._id !== id)))
             .catch(err => console.error('Failed to delete test:', err));
     };
 
     const handleLogout = () => {
-        axios.post("http://localhost:4000/logout").then(() => {
+        axios.post(`${API_BASE_URL}/logout`).then(() => {
             navigate("/login");
         }).catch(err => console.log(err));
     };
 
     const handleToggleStatus = (id, currentStatus) => {
-        axios.patch(`http://localhost:4000/test-list/${id}`, {
+        axios.patch(`${API_BASE_URL}/test-list/${id}`, {
             status: !currentStatus
         })
         .then(res => {

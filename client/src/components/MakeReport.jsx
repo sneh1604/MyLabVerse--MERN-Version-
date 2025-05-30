@@ -4,6 +4,8 @@ import { GiLiver, GiKidneys } from "react-icons/gi";
 import { BsDropletHalf } from "react-icons/bs";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { API_BASE_URL } from '../config/api-config';
+
 
 export default function MakeReport() {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
